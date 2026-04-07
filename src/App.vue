@@ -40,9 +40,9 @@ const iconMap = {
       </div>
     </header>
 
-    <div class="grid min-h-[calc(100vh-64px)] grid-cols-[320px_minmax(0,1fr)]">
-      <aside class="bg-white px-8 py-5">
-        <nav class="space-y-3">
+    <div class="grid min-h-[calc(100vh-64px)] grid-cols-[260px_minmax(0,1fr)]">
+      <aside class="bg-white px-6 py-4">
+        <nav class="space-y-2">
           <RouterLink
             v-for="item in navItems"
             :key="item.label"
@@ -54,12 +54,14 @@ const iconMap = {
               :href="href"
               @click="navigate"
               :class="[
-                'flex items-center gap-3 rounded-2xl px-3 py-2 text-[18px] transition hover:bg-slate-50',
-                isActive ? 'bg-slate-100 font-bold text-slate-900' : 'font-medium text-slate-600',
+                'flex items-center gap-2.5 rounded-xl px-3 py-2 text-[15px] transition hover:bg-slate-50',
+                isActive
+                  ? 'bg-slate-100 font-bold text-slate-900'
+                  : 'font-medium text-slate-600',
               ]"
             >
               <span
-                class="h-6 w-6 shrink-0"
+                class="h-5 w-5 shrink-0"
                 :class="isActive ? 'bg-[#01B2C9]' : 'bg-slate-500'"
                 :style="{
                   WebkitMaskImage: `url(${iconMap[item.icon]})`,
@@ -73,13 +75,15 @@ const iconMap = {
                 }"
               ></span>
 
-              <span :class="isActive ? 'font-bold' : 'font-medium'">{{ item.label }}</span>
+              <span :class="isActive ? 'font-bold' : 'font-medium'">{{
+                item.label
+              }}</span>
             </a>
           </RouterLink>
         </nav>
       </aside>
 
-      <main class="bg-white px-16 py-8">
+      <main class="bg-white px-10 py-2">
         <div class="mx-auto max-w-[1115px]">
           <RouterView />
         </div>

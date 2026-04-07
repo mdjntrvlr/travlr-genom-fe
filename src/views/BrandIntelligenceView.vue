@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import BaseModal from "../components/BaseModal.vue";
+import InfoTooltip from "../components/InfoTooltip.vue";
 import { useBrandIntelligence } from "../composables/useBrandIntelligence";
 import { useToast } from "../composables/useToast";
 import { useUploadQueue } from "../composables/useUploadQueue";
@@ -317,11 +319,9 @@ const {
         <div>
           <div class="flex items-center gap-2">
             <h3 class="text-[16px] font-semibold text-slate-900">Brand name</h3>
-            <span
-              class="flex h-5 w-5 items-center justify-center rounded-full bg-slate-600 text-[11px] font-semibold text-white"
-            >
-              i
-            </span>
+            <InfoTooltip
+              message="The primary identity and web source used for DNA extraction."
+            />
           </div>
 
           <div class="mt-3 flex items-center gap-4">
@@ -468,25 +468,12 @@ const {
 
     <div class="mt-36 h-px bg-slate-200"></div>
 
-    <div
-      v-if="isColorModalOpen"
-      class="fixed inset-0 z-[55] flex items-center justify-center bg-slate-900/45 px-6 backdrop-blur-[1px]"
+    <BaseModal
+      :open="isColorModalOpen"
+      title="Add Brand Color"
+      max-width-class="max-w-3xl"
+      @close="closeColorModal"
     >
-      <div
-        class="relative w-full max-w-3xl rounded-[1.6rem] bg-white px-8 py-7 shadow-2xl"
-      >
-        <button
-          type="button"
-          class="absolute right-6 top-6 text-slate-400 transition hover:text-slate-600"
-          @click="closeColorModal"
-          aria-label="Close add color modal"
-        >
-          <i class="ri-close-line text-[28px]" aria-hidden="true"></i>
-        </button>
-
-        <h3 class="text-[22px] font-semibold tracking-tight text-slate-900">
-          Add Brand Color
-        </h3>
         <p class="mt-4 max-w-2xl text-[15px] leading-7 text-slate-600">
           Provide a HEX code to define your brand&apos;s visual palette. This
           helps the AI suggest relevant image themes and aesthetics.
@@ -528,7 +515,8 @@ const {
           {{ newColorError }}
         </p>
 
-        <div class="mt-8 flex items-center gap-4">
+      <template #footer>
+        <div class="flex items-center gap-4">
           <button
             type="button"
             class="inline-flex min-w-[160px] items-center justify-center rounded-full border border-slate-300 bg-white px-7 py-3 text-[16px] font-semibold text-slate-700 transition hover:bg-slate-50"
@@ -544,8 +532,8 @@ const {
             Save
           </button>
         </div>
-      </div>
-    </div>
+      </template>
+    </BaseModal>
 
     <div
       v-if="isSubmitting"

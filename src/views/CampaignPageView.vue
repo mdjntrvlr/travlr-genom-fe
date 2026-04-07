@@ -1,33 +1,45 @@
 <template>
-  <section>
-    <h1 class="text-[26px] font-semibold tracking-tight text-slate-900">
-      Campaign Page
-    </h1>
-    <p class="mt-2 text-[18px] text-slate-600">
-      Draft campaign-ready outputs and map brand inputs into launch materials.
-    </p>
-  </section>
-
-  <section class="mt-7 rounded-2xl border border-slate-200 bg-slate-50 p-6">
-    <h2 class="text-[20px] font-semibold text-slate-900">Campaign Builder Placeholder</h2>
-    <p class="mt-2 max-w-3xl text-[15px] leading-7 text-slate-600">
-      This route is ready for real page content later. We can turn this into a layout with content
-      blocks, audience targeting, generated copy previews, and channel-specific exports.
-    </p>
-
-    <div class="mt-6 grid gap-3 md:grid-cols-3">
-      <div class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
-        <p class="text-sm font-medium text-slate-500">Headline Variants</p>
-        <p class="mt-1.5 text-2xl font-semibold text-slate-900">06</p>
-      </div>
-      <div class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
-        <p class="text-sm font-medium text-slate-500">Channel Drafts</p>
-        <p class="mt-1.5 text-2xl font-semibold text-slate-900">12</p>
-      </div>
-      <div class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
-        <p class="text-sm font-medium text-slate-500">Export Status</p>
-        <p class="mt-1.5 text-2xl font-semibold text-slate-900">Ready</p>
-      </div>
+    <div className='flex'>
+        <div className='max-w-[400px] flex flex-col gap-4'>
+            <div className='flex flex-col gap-4'>
+                <ChatItem v-for="(item, index) in chatItems" :key="index" :text="item" />
+            </div>
+            <div>
+                <div>Suggestion</div>
+                <div className='bg-[#F3F4F6] gap-[8px] p-[8px]'>Create a Campaign landing page</div>
+                <div className='border border-color-[#E5E7EB] p-[12px] rounded-lg'>
+                    <input className='' placeholder='Enter Prompt' />
+                    <button className='bg-[#01B2C9] text-sm rounded-full px-4 py-2 text-white'>Generate</button>
+                </div>
+            </div>
+        </div>
+        <div className='flex-1'>
+            <div>Preview</div>
+            <div>
+                <HeaderWlp />
+                <section>
+                    <h1 class="text-[26px] font-semibold tracking-tight text-slate-900">
+                        Campaign Page
+                    </h1>
+                    <p class="mt-2 text-[18px] text-slate-600">
+                        Draft campaign-ready outputs and map brand inputs into launch materials.
+                    </p>
+                </section>
+                <FooterWlp />
+            </div>
+        </div>
     </div>
-  </section>
 </template>
+
+<script setup lang="ts">
+import HeaderWlp from "../components/HeaderWlp.vue";
+import FooterWlp from "../components/FooterWlp.vue";
+import ChatItem from "../components/ChatItem.vue";
+
+const chatItems = [
+    "Let’s create something together! Describe your desired subject or use case to get started!",
+    "Use AI to draft your campaign copy, visuals, or messaging in seconds.",
+    "Try a different angle: brand storytelling, audience tone, or promotional hooks.",
+    "Ready to generate? Enter your prompt and watch the campaign content come alive.",
+];
+</script>

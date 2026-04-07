@@ -1,227 +1,274 @@
 <script setup lang="ts">
-import { onBeforeUnmount, ref } from 'vue'
+import { onBeforeUnmount, ref } from "vue";
 
 type StepItem = {
-  number: number
-  label: string
-  active?: boolean
-}
+  number: number;
+  label: string;
+  active?: boolean;
+};
 
 type UploadItem = {
-  id: number
-  name: string
-  label: string
-  progress: number
-  status: 'uploading' | 'complete'
-}
+  id: number;
+  name: string;
+  label: string;
+  progress: number;
+  status: "uploading" | "complete";
+};
 
 type ReviewState = {
-  brandName: string
-  domain: string
-  colors: string[]
-  coreValues: string[]
-}
+  brandName: string;
+  domain: string;
+  colors: string[];
+  coreValues: string[];
+};
 
-const allowedFiles = ['.png', '.jpg', '.jpeg', '.svg', '.pdf']
-const maxFileSize = 20 * 1024 * 1024
+type ToastState = {
+  message: string;
+  tone: "success" | "error";
+};
 
-const fileInput = ref<HTMLInputElement | null>(null)
-const currentStep = ref(1)
-const websiteUrl = ref('')
-const websiteUrlError = ref('')
-const submitError = ref('')
-const isSubmitting = ref(false)
-const uploadError = ref('')
-const uploads = ref<UploadItem[]>([])
+const allowedFiles = [".png", ".jpg", ".jpeg", ".svg", ".pdf"];
+const maxFileSize = 20 * 1024 * 1024;
+
+const fileInput = ref<HTMLInputElement | null>(null);
+const currentStep = ref(1);
+const websiteUrl = ref("");
+const websiteUrlError = ref("");
+const submitError = ref("");
+const isSubmitting = ref(false);
+const uploadError = ref("");
+const uploads = ref<UploadItem[]>([]);
+const toast = ref<ToastState | null>(null);
 const reviewState = ref<ReviewState>({
-  brandName: 'The Bali Bible',
-  domain: 'thebalibible.com',
-  colors: ['#2DCCD3', '#FFFFFF', '#111827', '#1F2937'],
-  coreValues: ['Authenticity', 'Local Knowledge', 'Trust', 'Editorial', 'Curation', 'Insider'],
-})
-const uploadTimers = new Map<number, number>()
-let nextUploadId = 1
+  brandName: "The Bali Bible",
+  domain: "thebalibible.com",
+  colors: ["#2DCCD3", "#FFFFFF", "#111827", "#1F2937"],
+  coreValues: [
+    "Authenticity",
+    "Local Knowledge",
+    "Trust",
+    "Editorial",
+    "Curation",
+    "Insider",
+  ],
+});
+const uploadTimers = new Map<number, number>();
+let toastTimer: number | null = null;
+let nextUploadId = 1;
 
 const steps: StepItem[] = [
-  { number: 1, label: 'Brand Extraction' },
-  { number: 2, label: 'Brand Review' },
-  { number: 3, label: 'Applications' },
-]
+  { number: 1, label: "Brand Extraction" },
+  { number: 2, label: "Brand Review" },
+  { number: 3, label: "Applications" },
+];
 
 const openFilePicker = () => {
-  fileInput.value?.click()
-}
+  fileInput.value?.click();
+};
 
 const resetFileInput = () => {
   if (fileInput.value) {
-    fileInput.value.value = ''
+    fileInput.value.value = "";
   }
-}
+};
 
 const formatFileLabel = (fileName: string) => {
-  const extension = fileName.toLowerCase().split('.').pop() ?? ''
+  const extension = fileName.toLowerCase().split(".").pop() ?? "";
 
-  if (extension === 'jpeg') {
-    return 'JPG'
+  if (extension === "jpeg") {
+    return "JPG";
   }
 
-  return extension.toUpperCase()
-}
+  return extension.toUpperCase();
+};
 
 const clearUploadTimer = (uploadId: number) => {
-  const timerId = uploadTimers.get(uploadId)
+  const timerId = uploadTimers.get(uploadId);
 
   if (timerId) {
-    window.clearInterval(timerId)
-    uploadTimers.delete(uploadId)
+    window.clearInterval(timerId);
+    uploadTimers.delete(uploadId);
   }
-}
+};
+
+const showToast = (message: string, tone: ToastState["tone"]) => {
+  toast.value = { message, tone };
+
+  if (toastTimer) {
+    window.clearTimeout(toastTimer);
+  }
+
+  toastTimer = window.setTimeout(() => {
+    toast.value = null;
+    toastTimer = null;
+  }, 2200);
+};
 
 const startUploadProgress = (uploadId: number) => {
   const timerId = window.setInterval(() => {
-    const upload = uploads.value.find((item) => item.id === uploadId)
+    const upload = uploads.value.find((item) => item.id === uploadId);
 
     if (!upload) {
-      clearUploadTimer(uploadId)
-      return
+      clearUploadTimer(uploadId);
+      return;
     }
 
     if (upload.progress >= 100) {
-      upload.progress = 100
-      upload.status = 'complete'
-      clearUploadTimer(uploadId)
-      return
+      upload.progress = 100;
+      upload.status = "complete";
+      clearUploadTimer(uploadId);
+      return;
     }
 
-    const increment = Math.min(upload.progress < 70 ? 12 : 7, 100 - upload.progress)
-    upload.progress += increment
+    const increment = Math.min(
+      upload.progress < 70 ? 12 : 7,
+      100 - upload.progress,
+    );
+    upload.progress += increment;
 
     if (upload.progress >= 100) {
-      upload.progress = 100
-      upload.status = 'complete'
-      clearUploadTimer(uploadId)
+      upload.progress = 100;
+      upload.status = "complete";
+      clearUploadTimer(uploadId);
     }
-  }, 320)
+  }, 320);
 
-  uploadTimers.set(uploadId, timerId)
-}
+  uploadTimers.set(uploadId, timerId);
+};
 
 const removeUpload = (uploadId: number) => {
-  clearUploadTimer(uploadId)
-  uploads.value = uploads.value.filter((item) => item.id !== uploadId)
-}
+  clearUploadTimer(uploadId);
+  uploads.value = uploads.value.filter((item) => item.id !== uploadId);
+};
 
 const normalizeWebsiteUrl = (rawValue: string) => {
-  const trimmedValue = rawValue.trim()
+  const trimmedValue = rawValue.trim();
 
   if (!trimmedValue) {
     return {
       isValid: false,
-      value: '',
-      message: 'Website URL is required.',
-    }
+      value: "",
+      message: "Website URL is required.",
+    };
   }
 
   const normalizedValue = /^https?:\/\//i.test(trimmedValue)
     ? trimmedValue
-    : `https://${trimmedValue}`
+    : `https://${trimmedValue}`;
 
   try {
-    const parsedUrl = new URL(normalizedValue)
-    const hasValidProtocol = parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:'
-    const hasValidHostname = parsedUrl.hostname.includes('.') && !parsedUrl.hostname.startsWith('.')
+    const parsedUrl = new URL(normalizedValue);
+    const hasValidProtocol =
+      parsedUrl.protocol === "http:" || parsedUrl.protocol === "https:";
+    const hasValidHostname =
+      parsedUrl.hostname.includes(".") && !parsedUrl.hostname.startsWith(".");
 
     if (!hasValidProtocol || !hasValidHostname) {
       return {
         isValid: false,
-        value: '',
-        message: 'Enter a valid website URL, for example `https://mastercard.com`.',
-      }
+        value: "",
+        message:
+          "Enter a valid website URL, for example `https://mastercard.com`.",
+      };
     }
 
     return {
       isValid: true,
       value: parsedUrl.toString(),
-      message: '',
-    }
+      message: "",
+    };
   } catch {
     return {
       isValid: false,
-      value: '',
-      message: 'Enter a valid website URL, for example `https://mastercard.com`.',
-    }
+      value: "",
+      message:
+        "Enter a valid website URL, for example `https://mastercard.com`.",
+    };
   }
-}
+};
 
 const validateWebsiteUrl = () => {
-  const result = normalizeWebsiteUrl(websiteUrl.value)
-  websiteUrlError.value = result.message
+  const result = normalizeWebsiteUrl(websiteUrl.value);
+  websiteUrlError.value = result.message;
 
   if (result.isValid) {
-    websiteUrl.value = result.value
+    websiteUrl.value = result.value;
   }
 
-  return result
-}
+  return result;
+};
 
 const handleWebsiteInput = () => {
-  websiteUrlError.value = ''
-  submitError.value = ''
-}
+  websiteUrlError.value = "";
+  submitError.value = "";
+};
 
 const toTitleCase = (value: string) => {
   return value
     .split(/[-.\s]+/)
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(' ')
-}
+    .join(" ");
+};
 
 const buildReviewState = (normalizedUrl: string) => {
-  const parsedUrl = new URL(normalizedUrl)
-  const hostname = parsedUrl.hostname.replace(/^www\./i, '')
-  const rootName = hostname.split('.')[0] ?? hostname
+  const parsedUrl = new URL(normalizedUrl);
+  const hostname = parsedUrl.hostname.replace(/^www\./i, "");
+  const rootName = hostname.split(".")[0] ?? hostname;
 
   reviewState.value = {
     brandName: toTitleCase(rootName),
     domain: hostname,
-    colors: ['#2DCCD3', '#FFFFFF', '#111827', '#1F2937'],
-    coreValues: ['Authenticity', 'Local Knowledge', 'Trust', 'Editorial', 'Curation', 'Insider'],
-  }
-}
+    colors: ["#2DCCD3", "#FFFFFF", "#111827", "#1F2937"],
+    coreValues: [
+      "Authenticity",
+      "Local Knowledge",
+      "Trust",
+      "Editorial",
+      "Curation",
+      "Insider",
+    ],
+  };
+};
 
 const removeColor = (color: string) => {
-  reviewState.value.colors = reviewState.value.colors.filter((item) => item !== color)
-}
+  reviewState.value.colors = reviewState.value.colors.filter(
+    (item) => item !== color,
+  );
+};
 
 const removeCoreValue = (value: string) => {
-  reviewState.value.coreValues = reviewState.value.coreValues.filter((item) => item !== value)
-}
+  reviewState.value.coreValues = reviewState.value.coreValues.filter(
+    (item) => item !== value,
+  );
+};
 
 const copyColor = async (color: string) => {
   try {
-    await navigator.clipboard.writeText(color)
+    await navigator.clipboard.writeText(color.toLowerCase());
+    showToast(`Copied ${color.toLowerCase()} to clipboard`, "success");
   } catch {
-    console.log('Unable to copy color to clipboard:', color)
+    console.log("Unable to copy color to clipboard:", color);
+    showToast("Unable to copy color", "error");
   }
-}
+};
 
 const submitBrandExtraction = async () => {
-  submitError.value = ''
+  submitError.value = "";
 
-  const validationResult = validateWebsiteUrl()
+  const validationResult = validateWebsiteUrl();
 
   if (!validationResult.isValid) {
-    return
+    return;
   }
 
-  isSubmitting.value = true
+  isSubmitting.value = true;
 
   try {
-    const response = await fetch('https://jsonplaceholder.typicode.com/posts', {
-      method: 'POST',
+    const response = await fetch("https://jsonplaceholder.typicode.com/posts", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         websiteUrl: validationResult.value,
@@ -230,50 +277,52 @@ const submitBrandExtraction = async () => {
           status: upload.status,
         })),
       }),
-    })
+    });
 
     if (!response.ok) {
-      throw new Error('Unable to submit brand extraction request.')
+      throw new Error("Unable to submit brand extraction request.");
     }
 
-    const data = await response.json()
-    console.log('Extract Brand response:', data)
-    buildReviewState(validationResult.value)
-    currentStep.value = 2
+    const data = await response.json();
+    console.log("Extract Brand response:", data);
+    buildReviewState(validationResult.value);
+    currentStep.value = 2;
   } catch (error) {
     submitError.value =
       error instanceof Error
         ? error.message
-        : 'Something went wrong while submitting the brand extraction request.'
+        : "Something went wrong while submitting the brand extraction request.";
   } finally {
-    isSubmitting.value = false
+    isSubmitting.value = false;
   }
-}
+};
 
 const handleFileChange = (event: Event) => {
-  const target = event.target as HTMLInputElement
-  const files = Array.from(target.files ?? [])
+  const target = event.target as HTMLInputElement;
+  const files = Array.from(target.files ?? []);
 
-  uploadError.value = ''
+  uploadError.value = "";
 
   if (!files.length) {
-    return
+    return;
   }
 
-  const errors: string[] = []
+  const errors: string[] = [];
 
   files.forEach((file) => {
-    const fileName = file.name.toLowerCase()
-    const isValidExtension = allowedFiles.some((extension) => fileName.endsWith(extension))
+    const fileName = file.name.toLowerCase();
+    const isValidExtension = allowedFiles.some((extension) =>
+      fileName.endsWith(extension),
+    );
 
     if (!isValidExtension) {
-      errors.push(`${file.name}: invalid file type.`)
-      return
+      errors.push(`${file.name}: invalid file type.`);
+      return;
     }
 
     if (file.size >= maxFileSize) {
-      errors.push(`${file.name}: file must be smaller than 20MB.`)
-      return
+      errors.push(`${file.name}: file must be smaller than 20MB.`);
+      return;
     }
 
     const upload: UploadItem = {
@@ -281,30 +330,46 @@ const handleFileChange = (event: Event) => {
       name: file.name,
       label: formatFileLabel(file.name),
       progress: 0,
-      status: 'uploading',
-    }
+      status: "uploading",
+    };
 
-    uploads.value.push(upload)
-    startUploadProgress(upload.id)
-  })
+    uploads.value.push(upload);
+    startUploadProgress(upload.id);
+  });
 
   if (errors.length) {
-    uploadError.value = errors.join(' ')
+    uploadError.value = errors.join(" ");
   }
 
-  resetFileInput()
-}
+  resetFileInput();
+};
 
 onBeforeUnmount(() => {
   uploadTimers.forEach((timerId) => {
-    window.clearInterval(timerId)
-  })
-  uploadTimers.clear()
-})
+    window.clearInterval(timerId);
+  });
+  uploadTimers.clear();
+
+  if (toastTimer) {
+    window.clearTimeout(toastTimer);
+  }
+});
 </script>
 
 <template>
   <div class="relative">
+    <div
+      v-if="toast"
+      :class="[
+        'fixed right-6 top-6 z-[60] rounded-xl px-4 py-3 text-[13px] font-medium shadow-lg',
+        toast.tone === 'success'
+          ? 'bg-slate-900 text-white'
+          : 'bg-rose-500 text-white',
+      ]"
+    >
+      {{ toast.message }}
+    </div>
+
     <section>
       <h1 class="text-[26px] font-semibold tracking-tight text-slate-900">
         Brand Intelligence
@@ -336,14 +401,20 @@ onBeforeUnmount(() => {
               stroke-width="2.2"
               aria-hidden="true"
             >
-              <path d="m4.5 10 3.5 3.5 7-7" stroke-linecap="round" stroke-linejoin="round" />
+              <path
+                d="m4.5 10 3.5 3.5 7-7"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
             </svg>
             <span v-else>{{ step.number }}</span>
           </span>
           <span
             :class="[
               'text-[18px]',
-              currentStep >= step.number ? 'font-medium text-slate-900' : 'font-normal text-slate-500',
+              currentStep >= step.number
+                ? 'font-medium text-slate-900'
+                : 'font-normal text-slate-500',
             ]"
           >
             {{ step.label }}
@@ -360,13 +431,16 @@ onBeforeUnmount(() => {
       </template>
     </section>
 
-    <section v-if="currentStep === 1" class="mt-8 max-w-[1115px] rounded-2xl bg-slate-100 px-6 py-6">
+    <section
+      v-if="currentStep === 1"
+      class="mt-8 max-w-[1115px] rounded-2xl bg-slate-100 px-6 py-6"
+    >
       <h2 class="text-[22px] font-semibold tracking-tight text-slate-900">
         Extract Brand DNA
       </h2>
       <p class="mt-2 max-w-[770px] text-[16px] leading-7 text-slate-600">
-        Provide a URL or upload a file to automatically identify potential WLP brand's voice and
-        style.
+        Provide a URL or upload a file to automatically identify potential WLP
+        brand's voice and style.
       </p>
 
       <div class="mt-6">
@@ -378,7 +452,9 @@ onBeforeUnmount(() => {
         <div
           :class="[
             'mt-2 flex h-[56px] max-w-[670px] items-center gap-3 rounded-xl bg-white px-5 shadow-sm',
-            websiteUrlError ? 'border border-rose-400' : 'border border-slate-300',
+            websiteUrlError
+              ? 'border border-rose-400'
+              : 'border border-slate-300',
           ]"
         >
           <svg
@@ -412,13 +488,15 @@ onBeforeUnmount(() => {
           {{ websiteUrlError }}
         </p>
         <p class="mt-2 max-w-[820px] text-[12px] leading-5 text-slate-500">
-          We'll use this to understand the core identity and voice of the brand before they expand
-          into travel.
+          We'll use this to understand the core identity and voice of the brand
+          before they expand into travel.
         </p>
       </div>
 
       <div class="mt-5">
-        <p class="text-[16px] text-slate-700">Or upload brand guideline or support files.</p>
+        <p class="text-[16px] text-slate-700">
+          Or upload brand guideline or support files.
+        </p>
 
         <input
           ref="fileInput"
@@ -429,7 +507,10 @@ onBeforeUnmount(() => {
           @change="handleFileChange"
         />
 
-        <div v-if="uploads.length" class="mt-3 w-full max-w-[50%] min-w-[340px] space-y-2">
+        <div
+          v-if="uploads.length"
+          class="mt-3 w-full max-w-[50%] min-w-[340px] space-y-2"
+        >
           <div
             v-for="upload in uploads"
             :key="upload.id"
@@ -448,7 +529,9 @@ onBeforeUnmount(() => {
                 {{ upload.label }}
               </div>
 
-              <p class="min-w-0 flex-1 truncate text-[13px] font-medium text-slate-700">
+              <p
+                class="min-w-0 flex-1 truncate text-[13px] font-medium text-slate-700"
+              >
                 {{ upload.name }}
               </p>
 
@@ -473,7 +556,11 @@ onBeforeUnmount(() => {
                   stroke-width="2"
                   aria-hidden="true"
                 >
-                  <path d="M4 7h16M9 7V5h6v2m-7 4v6m4-6v6m4-6v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12" stroke-linecap="round" stroke-linejoin="round" />
+                  <path
+                    d="M4 7h16M9 7V5h6v2m-7 4v6m4-6v6m4-6v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
                 </svg>
               </button>
             </div>
@@ -502,11 +589,14 @@ onBeforeUnmount(() => {
           Upload Document
         </button>
 
-        <p v-if="uploadError" class="mt-3 text-[12px] font-medium text-rose-600">
+        <p
+          v-if="uploadError"
+          class="mt-3 text-[12px] font-medium text-rose-600"
+        >
           {{ uploadError }}
         </p>
         <p class="mt-3 text-[12px] text-slate-500">
-          Supports {{ allowedFiles.join(', ') }} only. File size &lt; 20MB.
+          Supports {{ allowedFiles.join(", ") }} only. File size &lt; 20MB.
         </p>
       </div>
 
@@ -516,7 +606,7 @@ onBeforeUnmount(() => {
         type="button"
         @click="submitBrandExtraction"
         :disabled="isSubmitting"
-        class="mt-5 inline-flex items-center rounded-full bg-cyan-500 px-6 py-3.5 text-[15px] font-semibold text-white transition hover:bg-cyan-600"
+        class="mt-5 inline-flex items-center rounded-full bg-cyan-500 px-6 py-3.5 text-[15px] font-semibold text-white transition hover:bg-cyan-600 cursor-pointer disabled:cursor-not-allowed disabled:bg-cyan-400"
         :class="isSubmitting ? 'cursor-not-allowed opacity-70' : ''"
       >
         Extract Brand
@@ -527,20 +617,26 @@ onBeforeUnmount(() => {
       </p>
     </section>
 
-    <section v-else class="mt-8 max-w-[1115px] rounded-2xl bg-slate-100 px-6 py-6">
+    <section
+      v-else
+      class="mt-8 max-w-[1115px] rounded-2xl bg-slate-100 px-6 py-6"
+    >
       <h2 class="text-[22px] font-semibold tracking-tight text-slate-900">
         Brand Identity Blueprint
       </h2>
       <p class="mt-2 max-w-[780px] text-[16px] leading-7 text-slate-600">
-        We&apos;ve decoded your brand core identity. Review and refine these attributes to ensure
-        the AI generates copy that perfectly aligns with your brand.
+        We&apos;ve decoded your brand core identity. Review and refine these
+        attributes to ensure the AI generates copy that perfectly aligns with
+        your brand.
       </p>
 
       <div class="mt-5 rounded-2xl bg-white p-6">
         <div>
           <div class="flex items-center gap-2">
             <h3 class="text-[16px] font-semibold text-slate-900">Brand name</h3>
-            <span class="flex h-5 w-5 items-center justify-center rounded-full bg-slate-600 text-[11px] font-semibold text-white">
+            <span
+              class="flex h-5 w-5 items-center justify-center rounded-full bg-slate-600 text-[11px] font-semibold text-white"
+            >
               i
             </span>
           </div>
@@ -548,7 +644,9 @@ onBeforeUnmount(() => {
           <div class="mt-3 flex items-center gap-4">
             <div class="h-20 w-20 rounded-xl bg-slate-800"></div>
             <div>
-              <p class="text-[28px] font-semibold tracking-tight text-slate-900">
+              <p
+                class="text-[28px] font-semibold tracking-tight text-slate-900"
+              >
                 {{ reviewState.brandName }}
               </p>
               <p class="text-[16px] text-slate-600">{{ reviewState.domain }}</p>
@@ -560,11 +658,18 @@ onBeforeUnmount(() => {
           <div class="flex items-center justify-between gap-4">
             <div class="flex items-center gap-2">
               <h3 class="text-[16px] font-semibold text-slate-900">Colours</h3>
-              <span class="flex h-5 w-5 items-center justify-center rounded-full bg-slate-600 text-[11px] font-semibold text-white">
+              <span
+                class="flex h-5 w-5 items-center justify-center rounded-full bg-slate-600 text-[11px] font-semibold text-white"
+              >
                 i
               </span>
             </div>
-            <button type="button" class="text-[14px] font-medium text-slate-500">Add item</button>
+            <button
+              type="button"
+              class="text-[14px] font-medium text-slate-500"
+            >
+              Add item
+            </button>
           </div>
 
           <div class="mt-3 rounded-2xl bg-slate-100 p-4">
@@ -578,23 +683,16 @@ onBeforeUnmount(() => {
                   class="h-10 w-10 rounded-full border border-slate-200"
                   :style="{ backgroundColor: color }"
                 ></span>
-                <span class="text-[14px] font-medium text-slate-800">{{ color.toLowerCase() }}</span>
+                <span class="text-[14px] font-medium text-slate-800">{{
+                  color.toLowerCase()
+                }}</span>
                 <button
                   type="button"
-                  class="text-slate-500 transition hover:text-slate-700"
+                  class="cursor-pointer text-slate-500 transition hover:text-slate-700"
                   @click="copyColor(color)"
                   aria-label="Copy color"
                 >
-                  <svg
-                    class="h-4.5 w-4.5"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    aria-hidden="true"
-                  >
-                    <path d="M9 9h10v10H9zM5 5h10v10" stroke-linecap="round" stroke-linejoin="round" />
-                  </svg>
+                  <i class="ri-file-copy-line cursor-pointer text-[18px]" aria-hidden="true"></i>
                 </button>
                 <span class="h-4 w-px bg-slate-200"></span>
                 <button
@@ -611,7 +709,11 @@ onBeforeUnmount(() => {
                     stroke-width="2"
                     aria-hidden="true"
                   >
-                    <path d="M6 6l12 12M18 6 6 18" stroke-linecap="round" stroke-linejoin="round" />
+                    <path
+                      d="M6 6l12 12M18 6 6 18"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
                   </svg>
                 </button>
               </div>
@@ -622,12 +724,21 @@ onBeforeUnmount(() => {
         <div class="mt-8">
           <div class="flex items-center justify-between gap-4">
             <div class="flex items-center gap-2">
-              <h3 class="text-[16px] font-semibold text-slate-900">Core value</h3>
-              <span class="flex h-5 w-5 items-center justify-center rounded-full bg-slate-600 text-[11px] font-semibold text-white">
+              <h3 class="text-[16px] font-semibold text-slate-900">
+                Core value
+              </h3>
+              <span
+                class="flex h-5 w-5 items-center justify-center rounded-full bg-slate-600 text-[11px] font-semibold text-white"
+              >
                 i
               </span>
             </div>
-            <button type="button" class="text-[14px] font-medium text-slate-500">Add item</button>
+            <button
+              type="button"
+              class="text-[14px] font-medium text-slate-500"
+            >
+              Add item
+            </button>
           </div>
 
           <div class="mt-3 rounded-2xl bg-slate-100 p-4">
@@ -637,7 +748,9 @@ onBeforeUnmount(() => {
                 :key="value"
                 class="flex items-center gap-2 rounded-full bg-white px-3 py-2"
               >
-                <span class="text-[14px] font-medium text-slate-800">{{ value }}</span>
+                <span class="text-[14px] font-medium text-slate-800">{{
+                  value
+                }}</span>
                 <button
                   type="button"
                   class="text-slate-500 transition hover:text-slate-700"
@@ -652,7 +765,11 @@ onBeforeUnmount(() => {
                     stroke-width="2"
                     aria-hidden="true"
                   >
-                    <path d="M6 6l12 12M18 6 6 18" stroke-linecap="round" stroke-linejoin="round" />
+                    <path
+                      d="M6 6l12 12M18 6 6 18"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
                   </svg>
                 </button>
               </div>
@@ -669,8 +786,12 @@ onBeforeUnmount(() => {
       class="fixed inset-0 z-50 flex items-center justify-center bg-white/90 backdrop-blur-sm"
     >
       <div class="flex flex-col items-center gap-5">
-        <div class="h-12 w-12 animate-spin rounded-full border-4 border-slate-200 border-t-cyan-500"></div>
-        <p class="text-[22px] font-semibold text-slate-900">Reading brand values</p>
+        <div
+          class="h-12 w-12 animate-spin rounded-full border-4 border-slate-200 border-t-cyan-500"
+        ></div>
+        <p class="text-[22px] font-semibold text-slate-900">
+          Reading brand values
+        </p>
       </div>
     </div>
   </div>

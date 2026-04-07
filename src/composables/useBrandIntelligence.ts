@@ -1,0 +1,254 @@
+import { ref, type Ref } from "vue";
+
+import type { ReviewState, StepItem, UploadItem } from "../types/brandIntelligence";
+
+const buildDefaultReviewState = (): ReviewState => ({
+  brandName: "The Bali Bible",
+  domain: "thebalibible.com",
+  colors: ["#2DCCD3", "#FFFFFF", "#111827", "#1F2937"],
+  coreValues: [
+    "Authenticity",
+    "Local Knowledge",
+    "Trust",
+    "Editorial",
+    "Curation",
+    "Insider",
+  ],
+});
+
+export const useBrandIntelligence = (
+  uploads: Ref<UploadItem[]>,
+  showToast: (message: string, tone: "success" | "error") => void,
+) => {
+  const currentStep = ref(1);
+  const websiteUrl = ref("");
+  const websiteUrlError = ref("");
+  const submitError = ref("");
+  const isSubmitting = ref(false);
+  const isColorModalOpen = ref(false);
+  const newColorHex = ref("#01B2C9");
+  const newColorError = ref("");
+  const reviewState = ref<ReviewState>(buildDefaultReviewState());
+
+  const steps: StepItem[] = [
+    { number: 1, label: "Brand Extraction" },
+    { number: 2, label: "Brand Review" },
+    { number: 3, label: "Applications" },
+  ];
+
+  const normalizeWebsiteUrl = (rawValue: string) => {
+    const trimmedValue = rawValue.trim();
+
+    if (!trimmedValue) {
+      return {
+        isValid: false,
+        value: "",
+        message: "Website URL is required.",
+      };
+    }
+
+    const normalizedValue = /^https?:\/\//i.test(trimmedValue)
+      ? trimmedValue
+      : `https://${trimmedValue}`;
+
+    try {
+      const parsedUrl = new URL(normalizedValue);
+      const hasValidProtocol =
+        parsedUrl.protocol === "http:" || parsedUrl.protocol === "https:";
+      const hasValidHostname =
+        parsedUrl.hostname.includes(".") && !parsedUrl.hostname.startsWith(".");
+
+      if (!hasValidProtocol || !hasValidHostname) {
+        return {
+          isValid: false,
+          value: "",
+          message:
+            "Enter a valid website URL, for example `https://mastercard.com`.",
+        };
+      }
+
+      return {
+        isValid: true,
+        value: parsedUrl.toString(),
+        message: "",
+      };
+    } catch {
+      return {
+        isValid: false,
+        value: "",
+        message:
+          "Enter a valid website URL, for example `https://mastercard.com`.",
+      };
+    }
+  };
+
+  const validateWebsiteUrl = () => {
+    const result = normalizeWebsiteUrl(websiteUrl.value);
+    websiteUrlError.value = result.message;
+
+    if (result.isValid) {
+      websiteUrl.value = result.value;
+    }
+
+    return result;
+  };
+
+  const handleWebsiteInput = () => {
+    websiteUrlError.value = "";
+    submitError.value = "";
+  };
+
+  const openColorModal = () => {
+    isColorModalOpen.value = true;
+    newColorHex.value = "#01B2C9";
+    newColorError.value = "";
+  };
+
+  const closeColorModal = () => {
+    isColorModalOpen.value = false;
+    newColorError.value = "";
+  };
+
+  const handleColorInput = (event: Event) => {
+    const target = event.target as HTMLInputElement;
+    let sanitizedValue = target.value.replace(/[^0-9a-fA-F]/g, "").slice(0, 6);
+
+    if (sanitizedValue) {
+      sanitizedValue = `#${sanitizedValue.toUpperCase()}`;
+    } else {
+      sanitizedValue = "#";
+    }
+
+    newColorHex.value = sanitizedValue;
+    newColorError.value = "";
+  };
+
+  const saveCustomColor = () => {
+    const normalizedColor = newColorHex.value.trim().toUpperCase();
+    const isValidHex = /^#[0-9A-F]{6}$/.test(normalizedColor);
+
+    if (!isValidHex) {
+      newColorError.value =
+        "Enter a valid 6-digit HEX color, for example #01B2C9.";
+      return;
+    }
+
+    if (reviewState.value.colors.includes(normalizedColor)) {
+      newColorError.value = "That color already exists in the palette.";
+      return;
+    }
+
+    reviewState.value.colors.push(normalizedColor);
+    closeColorModal();
+    showToast(`Added ${normalizedColor.toLowerCase()} to palette`, "success");
+  };
+
+  const toTitleCase = (value: string) => {
+    return value
+      .split(/[-.\s]+/)
+      .filter(Boolean)
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(" ");
+  };
+
+  const buildReviewState = (normalizedUrl: string) => {
+    const parsedUrl = new URL(normalizedUrl);
+    const hostname = parsedUrl.hostname.replace(/^www\./i, "");
+    const rootName = hostname.split(".")[0] ?? hostname;
+
+    reviewState.value = {
+      ...buildDefaultReviewState(),
+      brandName: toTitleCase(rootName),
+      domain: hostname,
+    };
+  };
+
+  const removeColor = (color: string) => {
+    reviewState.value.colors = reviewState.value.colors.filter(
+      (item) => item !== color,
+    );
+  };
+
+  const removeCoreValue = (value: string) => {
+    reviewState.value.coreValues = reviewState.value.coreValues.filter(
+      (item) => item !== value,
+    );
+  };
+
+  const copyColor = async (color: string) => {
+    try {
+      await navigator.clipboard.writeText(color.toLowerCase());
+      showToast(`Copied ${color.toLowerCase()} to clipboard`, "success");
+    } catch {
+      console.log("Unable to copy color to clipboard:", color);
+      showToast("Unable to copy color", "error");
+    }
+  };
+
+  const submitBrandExtraction = async () => {
+    submitError.value = "";
+
+    const validationResult = validateWebsiteUrl();
+
+    if (!validationResult.isValid) {
+      return;
+    }
+
+    isSubmitting.value = true;
+
+    try {
+      const response = await fetch("https://jsonplaceholder.typicode.com/posts", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          websiteUrl: validationResult.value,
+          uploadedFiles: uploads.value.map((upload) => ({
+            name: upload.name,
+            status: upload.status,
+          })),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Unable to submit brand extraction request.");
+      }
+
+      const data = await response.json();
+      console.log("Extract Brand response:", data);
+      buildReviewState(validationResult.value);
+      currentStep.value = 2;
+    } catch (error) {
+      submitError.value =
+        error instanceof Error
+          ? error.message
+          : "Something went wrong while submitting the brand extraction request.";
+    } finally {
+      isSubmitting.value = false;
+    }
+  };
+
+  return {
+    currentStep,
+    websiteUrl,
+    websiteUrlError,
+    submitError,
+    isSubmitting,
+    isColorModalOpen,
+    newColorHex,
+    newColorError,
+    reviewState,
+    steps,
+    validateWebsiteUrl,
+    handleWebsiteInput,
+    openColorModal,
+    closeColorModal,
+    handleColorInput,
+    saveCustomColor,
+    removeColor,
+    removeCoreValue,
+    copyColor,
+    submitBrandExtraction,
+  };
+};

@@ -1,359 +1,42 @@
 <script setup lang="ts">
-import { onBeforeUnmount, ref } from "vue";
+import { useBrandIntelligence } from "../composables/useBrandIntelligence";
+import { useToast } from "../composables/useToast";
+import { useUploadQueue } from "../composables/useUploadQueue";
 
-type StepItem = {
-  number: number;
-  label: string;
-  active?: boolean;
-};
+const { toast, showToast } = useToast();
 
-type UploadItem = {
-  id: number;
-  name: string;
-  label: string;
-  progress: number;
-  status: "uploading" | "complete";
-};
+const {
+  allowedFiles,
+  fileInput,
+  uploadError,
+  uploads,
+  openFilePicker,
+  removeUpload,
+  handleFileChange,
+} = useUploadQueue();
 
-type ReviewState = {
-  brandName: string;
-  domain: string;
-  colors: string[];
-  coreValues: string[];
-};
-
-type ToastState = {
-  message: string;
-  tone: "success" | "error";
-};
-
-const allowedFiles = [".png", ".jpg", ".jpeg", ".svg", ".pdf"];
-const maxFileSize = 20 * 1024 * 1024;
-
-const fileInput = ref<HTMLInputElement | null>(null);
-const currentStep = ref(1);
-const websiteUrl = ref("");
-const websiteUrlError = ref("");
-const submitError = ref("");
-const isSubmitting = ref(false);
-const uploadError = ref("");
-const uploads = ref<UploadItem[]>([]);
-const toast = ref<ToastState | null>(null);
-const reviewState = ref<ReviewState>({
-  brandName: "The Bali Bible",
-  domain: "thebalibible.com",
-  colors: ["#2DCCD3", "#FFFFFF", "#111827", "#1F2937"],
-  coreValues: [
-    "Authenticity",
-    "Local Knowledge",
-    "Trust",
-    "Editorial",
-    "Curation",
-    "Insider",
-  ],
-});
-const uploadTimers = new Map<number, number>();
-let toastTimer: number | null = null;
-let nextUploadId = 1;
-
-const steps: StepItem[] = [
-  { number: 1, label: "Brand Extraction" },
-  { number: 2, label: "Brand Review" },
-  { number: 3, label: "Applications" },
-];
-
-const openFilePicker = () => {
-  fileInput.value?.click();
-};
-
-const resetFileInput = () => {
-  if (fileInput.value) {
-    fileInput.value.value = "";
-  }
-};
-
-const formatFileLabel = (fileName: string) => {
-  const extension = fileName.toLowerCase().split(".").pop() ?? "";
-
-  if (extension === "jpeg") {
-    return "JPG";
-  }
-
-  return extension.toUpperCase();
-};
-
-const clearUploadTimer = (uploadId: number) => {
-  const timerId = uploadTimers.get(uploadId);
-
-  if (timerId) {
-    window.clearInterval(timerId);
-    uploadTimers.delete(uploadId);
-  }
-};
-
-const showToast = (message: string, tone: ToastState["tone"]) => {
-  toast.value = { message, tone };
-
-  if (toastTimer) {
-    window.clearTimeout(toastTimer);
-  }
-
-  toastTimer = window.setTimeout(() => {
-    toast.value = null;
-    toastTimer = null;
-  }, 2200);
-};
-
-const startUploadProgress = (uploadId: number) => {
-  const timerId = window.setInterval(() => {
-    const upload = uploads.value.find((item) => item.id === uploadId);
-
-    if (!upload) {
-      clearUploadTimer(uploadId);
-      return;
-    }
-
-    if (upload.progress >= 100) {
-      upload.progress = 100;
-      upload.status = "complete";
-      clearUploadTimer(uploadId);
-      return;
-    }
-
-    const increment = Math.min(
-      upload.progress < 70 ? 12 : 7,
-      100 - upload.progress,
-    );
-    upload.progress += increment;
-
-    if (upload.progress >= 100) {
-      upload.progress = 100;
-      upload.status = "complete";
-      clearUploadTimer(uploadId);
-    }
-  }, 320);
-
-  uploadTimers.set(uploadId, timerId);
-};
-
-const removeUpload = (uploadId: number) => {
-  clearUploadTimer(uploadId);
-  uploads.value = uploads.value.filter((item) => item.id !== uploadId);
-};
-
-const normalizeWebsiteUrl = (rawValue: string) => {
-  const trimmedValue = rawValue.trim();
-
-  if (!trimmedValue) {
-    return {
-      isValid: false,
-      value: "",
-      message: "Website URL is required.",
-    };
-  }
-
-  const normalizedValue = /^https?:\/\//i.test(trimmedValue)
-    ? trimmedValue
-    : `https://${trimmedValue}`;
-
-  try {
-    const parsedUrl = new URL(normalizedValue);
-    const hasValidProtocol =
-      parsedUrl.protocol === "http:" || parsedUrl.protocol === "https:";
-    const hasValidHostname =
-      parsedUrl.hostname.includes(".") && !parsedUrl.hostname.startsWith(".");
-
-    if (!hasValidProtocol || !hasValidHostname) {
-      return {
-        isValid: false,
-        value: "",
-        message:
-          "Enter a valid website URL, for example `https://mastercard.com`.",
-      };
-    }
-
-    return {
-      isValid: true,
-      value: parsedUrl.toString(),
-      message: "",
-    };
-  } catch {
-    return {
-      isValid: false,
-      value: "",
-      message:
-        "Enter a valid website URL, for example `https://mastercard.com`.",
-    };
-  }
-};
-
-const validateWebsiteUrl = () => {
-  const result = normalizeWebsiteUrl(websiteUrl.value);
-  websiteUrlError.value = result.message;
-
-  if (result.isValid) {
-    websiteUrl.value = result.value;
-  }
-
-  return result;
-};
-
-const handleWebsiteInput = () => {
-  websiteUrlError.value = "";
-  submitError.value = "";
-};
-
-const toTitleCase = (value: string) => {
-  return value
-    .split(/[-.\s]+/)
-    .filter(Boolean)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
-};
-
-const buildReviewState = (normalizedUrl: string) => {
-  const parsedUrl = new URL(normalizedUrl);
-  const hostname = parsedUrl.hostname.replace(/^www\./i, "");
-  const rootName = hostname.split(".")[0] ?? hostname;
-
-  reviewState.value = {
-    brandName: toTitleCase(rootName),
-    domain: hostname,
-    colors: ["#2DCCD3", "#FFFFFF", "#111827", "#1F2937"],
-    coreValues: [
-      "Authenticity",
-      "Local Knowledge",
-      "Trust",
-      "Editorial",
-      "Curation",
-      "Insider",
-    ],
-  };
-};
-
-const removeColor = (color: string) => {
-  reviewState.value.colors = reviewState.value.colors.filter(
-    (item) => item !== color,
-  );
-};
-
-const removeCoreValue = (value: string) => {
-  reviewState.value.coreValues = reviewState.value.coreValues.filter(
-    (item) => item !== value,
-  );
-};
-
-const copyColor = async (color: string) => {
-  try {
-    await navigator.clipboard.writeText(color.toLowerCase());
-    showToast(`Copied ${color.toLowerCase()} to clipboard`, "success");
-  } catch {
-    console.log("Unable to copy color to clipboard:", color);
-    showToast("Unable to copy color", "error");
-  }
-};
-
-const submitBrandExtraction = async () => {
-  submitError.value = "";
-
-  const validationResult = validateWebsiteUrl();
-
-  if (!validationResult.isValid) {
-    return;
-  }
-
-  isSubmitting.value = true;
-
-  try {
-    const response = await fetch("https://jsonplaceholder.typicode.com/posts", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        websiteUrl: validationResult.value,
-        uploadedFiles: uploads.value.map((upload) => ({
-          name: upload.name,
-          status: upload.status,
-        })),
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error("Unable to submit brand extraction request.");
-    }
-
-    const data = await response.json();
-    console.log("Extract Brand response:", data);
-    buildReviewState(validationResult.value);
-    currentStep.value = 2;
-  } catch (error) {
-    submitError.value =
-      error instanceof Error
-        ? error.message
-        : "Something went wrong while submitting the brand extraction request.";
-  } finally {
-    isSubmitting.value = false;
-  }
-};
-
-const handleFileChange = (event: Event) => {
-  const target = event.target as HTMLInputElement;
-  const files = Array.from(target.files ?? []);
-
-  uploadError.value = "";
-
-  if (!files.length) {
-    return;
-  }
-
-  const errors: string[] = [];
-
-  files.forEach((file) => {
-    const fileName = file.name.toLowerCase();
-    const isValidExtension = allowedFiles.some((extension) =>
-      fileName.endsWith(extension),
-    );
-
-    if (!isValidExtension) {
-      errors.push(`${file.name}: invalid file type.`);
-      return;
-    }
-
-    if (file.size >= maxFileSize) {
-      errors.push(`${file.name}: file must be smaller than 20MB.`);
-      return;
-    }
-
-    const upload: UploadItem = {
-      id: nextUploadId++,
-      name: file.name,
-      label: formatFileLabel(file.name),
-      progress: 0,
-      status: "uploading",
-    };
-
-    uploads.value.push(upload);
-    startUploadProgress(upload.id);
-  });
-
-  if (errors.length) {
-    uploadError.value = errors.join(" ");
-  }
-
-  resetFileInput();
-};
-
-onBeforeUnmount(() => {
-  uploadTimers.forEach((timerId) => {
-    window.clearInterval(timerId);
-  });
-  uploadTimers.clear();
-
-  if (toastTimer) {
-    window.clearTimeout(toastTimer);
-  }
-});
+const {
+  currentStep,
+  websiteUrl,
+  websiteUrlError,
+  submitError,
+  isSubmitting,
+  isColorModalOpen,
+  newColorHex,
+  newColorError,
+  reviewState,
+  steps,
+  validateWebsiteUrl,
+  handleWebsiteInput,
+  openColorModal,
+  closeColorModal,
+  handleColorInput,
+  saveCustomColor,
+  removeColor,
+  removeCoreValue,
+  copyColor,
+  submitBrandExtraction,
+} = useBrandIntelligence(uploads, showToast);
 </script>
 
 <template>
@@ -666,7 +349,8 @@ onBeforeUnmount(() => {
             </div>
             <button
               type="button"
-              class="text-[14px] font-medium text-slate-500"
+              class="text-[14px] font-medium text-slate-500 cursor-pointer"
+              @click="openColorModal"
             >
               Add item
             </button>
@@ -692,7 +376,10 @@ onBeforeUnmount(() => {
                   @click="copyColor(color)"
                   aria-label="Copy color"
                 >
-                  <i class="ri-file-copy-line cursor-pointer text-[18px]" aria-hidden="true"></i>
+                  <i
+                    class="ri-file-copy-line cursor-pointer text-[18px]"
+                    aria-hidden="true"
+                  ></i>
                 </button>
                 <span class="h-4 w-px bg-slate-200"></span>
                 <button
@@ -780,6 +467,85 @@ onBeforeUnmount(() => {
     </section>
 
     <div class="mt-36 h-px bg-slate-200"></div>
+
+    <div
+      v-if="isColorModalOpen"
+      class="fixed inset-0 z-[55] flex items-center justify-center bg-slate-900/45 px-6 backdrop-blur-[1px]"
+    >
+      <div
+        class="relative w-full max-w-3xl rounded-[1.6rem] bg-white px-8 py-7 shadow-2xl"
+      >
+        <button
+          type="button"
+          class="absolute right-6 top-6 text-slate-400 transition hover:text-slate-600"
+          @click="closeColorModal"
+          aria-label="Close add color modal"
+        >
+          <i class="ri-close-line text-[28px]" aria-hidden="true"></i>
+        </button>
+
+        <h3 class="text-[22px] font-semibold tracking-tight text-slate-900">
+          Add Brand Color
+        </h3>
+        <p class="mt-4 max-w-2xl text-[15px] leading-7 text-slate-600">
+          Provide a HEX code to define your brand&apos;s visual palette. This
+          helps the AI suggest relevant image themes and aesthetics.
+        </p>
+
+        <div class="mt-8 flex items-center gap-3">
+          <div
+            class="h-[64px] w-[64px] shrink-0 rounded-[0.9rem] border border-slate-200 shadow-sm"
+            :style="{
+              backgroundColor: /^#[0-9A-F]{6}$/i.test(newColorHex)
+                ? newColorHex
+                : '#FFFFFF',
+            }"
+          ></div>
+
+          <div
+            :class="[
+              'flex h-[64px] flex-1 items-center rounded-[0.9rem] border bg-white px-5 shadow-sm',
+              newColorError ? 'border-rose-400' : 'border-slate-300',
+            ]"
+          >
+            <span class="text-[18px] text-slate-500">#</span>
+            <input
+              :value="newColorHex.replace(/^#/, '')"
+              type="text"
+              inputmode="text"
+              maxlength="6"
+              class="ml-3 w-full border-0 bg-transparent p-0 text-[18px] font-medium uppercase text-slate-900 outline-none placeholder:text-slate-400"
+              placeholder="01B2C9"
+              @input="handleColorInput"
+            />
+          </div>
+        </div>
+
+        <p
+          v-if="newColorError"
+          class="mt-3 text-[12px] font-medium text-rose-600"
+        >
+          {{ newColorError }}
+        </p>
+
+        <div class="mt-8 flex items-center gap-4">
+          <button
+            type="button"
+            class="inline-flex min-w-[160px] items-center justify-center rounded-full border border-slate-300 bg-white px-7 py-3 text-[16px] font-semibold text-slate-700 transition hover:bg-slate-50"
+            @click="closeColorModal"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="inline-flex min-w-[160px] items-center justify-center rounded-full bg-cyan-500 px-7 py-3 text-[16px] font-semibold text-white transition hover:bg-cyan-600"
+            @click="saveCustomColor"
+          >
+            Save
+          </button>
+        </div>
+      </div>
+    </div>
 
     <div
       v-if="isSubmitting"

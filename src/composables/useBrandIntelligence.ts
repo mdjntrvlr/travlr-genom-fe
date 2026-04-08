@@ -26,6 +26,218 @@ const buildDefaultReviewState = (): ReviewState => ({
     "The Bali Bible is a trusted travel companion for modern explorers seeking curated island experiences. It blends insider knowledge with polished editorial storytelling to make discovery feel effortless, aspirational, and deeply connected to local culture.",
 });
 
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL?.trim() || "/api";
+
+type UnknownRecord = Record<string, unknown>;
+
+const isRecord = (value: unknown): value is UnknownRecord =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+const normalizeKey = (value: string) => value.replace(/[^a-z0-9]/gi, "").toLowerCase();
+
+const normalizeText = (value: string) => value.trim().replace(/\s+/g, " ");
+
+const uniqueStrings = (values: string[]) => {
+  const seen = new Set<string>();
+
+  return values.filter((value) => {
+    const normalizedValue = value.toLowerCase();
+
+    if (seen.has(normalizedValue)) {
+      return false;
+    }
+
+    seen.add(normalizedValue);
+    return true;
+  });
+};
+
+const getCandidateSources = (payload: unknown): UnknownRecord[] => {
+  if (!isRecord(payload)) {
+    return [];
+  }
+
+  const sources = [payload];
+
+  for (const key of [
+    "data",
+    "result",
+    "analysis",
+    "brand",
+    "brandProfile",
+    "brand_profile",
+    "profile",
+    "report",
+  ]) {
+    const nestedValue = payload[key];
+
+    if (isRecord(nestedValue)) {
+      sources.push(nestedValue);
+    }
+  }
+
+  return sources;
+};
+
+const findDirectValueByAliases = (payload: unknown, aliases: string[]) => {
+  const normalizedAliases = new Set(aliases.map(normalizeKey));
+
+  for (const source of getCandidateSources(payload)) {
+    for (const [key, value] of Object.entries(source)) {
+      if (normalizedAliases.has(normalizeKey(key)) && value != null) {
+        return value;
+      }
+    }
+  }
+
+  return undefined;
+};
+
+const findValueByAliases = (payload: unknown, aliases: string[]) => {
+  const normalizedAliases = new Set(aliases.map(normalizeKey));
+  const queue: unknown[] = [payload];
+  const visited = new Set<object>();
+
+  while (queue.length) {
+    const currentValue = queue.shift();
+
+    if (Array.isArray(currentValue)) {
+      queue.push(...currentValue);
+      continue;
+    }
+
+    if (!isRecord(currentValue)) {
+      continue;
+    }
+
+    if (visited.has(currentValue)) {
+      continue;
+    }
+
+    visited.add(currentValue);
+
+    for (const [key, value] of Object.entries(currentValue)) {
+      if (normalizedAliases.has(normalizeKey(key)) && value != null) {
+        return value;
+      }
+    }
+
+    queue.push(...Object.values(currentValue));
+  }
+
+  return undefined;
+};
+
+const extractString = (value: unknown): string => {
+  if (typeof value === "string") {
+    return normalizeText(value);
+  }
+
+  if (typeof value === "number") {
+    return String(value);
+  }
+
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => extractString(item))
+      .filter(Boolean)
+      .join(", ");
+  }
+
+  if (isRecord(value)) {
+    for (const key of ["name", "label", "title", "value", "text", "description"]) {
+      const nestedValue = value[key];
+
+      if (typeof nestedValue === "string" || typeof nestedValue === "number") {
+        return extractString(nestedValue);
+      }
+    }
+  }
+
+  return "";
+};
+
+const normalizeStringList = (value: unknown): string[] => {
+  if (Array.isArray(value)) {
+    return uniqueStrings(
+      value
+        .flatMap((item) => {
+          if (typeof item === "string") {
+            return item.split(/\r?\n|[,;|]/);
+          }
+
+          const extractedValue = extractString(item);
+          return extractedValue ? extractedValue.split(/\r?\n|[,;|]/) : [];
+        })
+        .map((item) => normalizeText(item))
+        .filter(Boolean),
+    );
+  }
+
+  if (typeof value === "string") {
+    return uniqueStrings(
+      value
+        .split(/\r?\n|[,;|]/)
+        .map((item) => normalizeText(item))
+        .filter(Boolean),
+    );
+  }
+
+  const extractedValue = extractString(value);
+  return extractedValue ? [extractedValue] : [];
+};
+
+const normalizeColorToken = (value: string) => {
+  const normalizedValue = normalizeText(value);
+  const hexMatch = normalizedValue.match(/#?[0-9a-fA-F]{6}\b/);
+
+  if (hexMatch) {
+    return `#${hexMatch[0].replace("#", "").toUpperCase()}`;
+  }
+
+  return normalizedValue;
+};
+
+const normalizeColorList = (value: unknown): string[] => {
+  if (Array.isArray(value)) {
+    return uniqueStrings(
+      value
+        .flatMap((item) => {
+          if (typeof item === "string") {
+            return item.split(/\r?\n|[,;|]/);
+          }
+
+          if (isRecord(item)) {
+            for (const key of ["hex", "color", "colour", "value", "name"]) {
+              const nestedValue = item[key];
+
+              if (typeof nestedValue === "string") {
+                return [nestedValue];
+              }
+            }
+          }
+
+          const extractedValue = extractString(item);
+          return extractedValue ? [extractedValue] : [];
+        })
+        .map((item) => normalizeColorToken(item))
+        .filter(Boolean),
+    );
+  }
+
+  if (typeof value === "string") {
+    return uniqueStrings(
+      value
+        .split(/\r?\n|[,;|]/)
+        .map((item) => normalizeColorToken(item))
+        .filter(Boolean),
+    );
+  }
+
+  return [];
+};
+
 export const useBrandIntelligence = (
   uploads: Ref<UploadItem[]>,
   showToast: (message: string, tone: "success" | "error") => void,
@@ -410,15 +622,212 @@ export const useBrandIntelligence = (
       .join(" ");
   };
 
-  const buildReviewState = (normalizedUrl: string) => {
+  const getDomainFromValue = (value: string) => {
+    const normalizedValue = /^https?:\/\//i.test(value) ? value : `https://${value}`;
+
+    try {
+      return new URL(normalizedValue).hostname.replace(/^www\./i, "");
+    } catch {
+      return value.replace(/^www\./i, "");
+    }
+  };
+
+  const buildReviewState = (normalizedUrl: string, payload?: unknown) => {
     const parsedUrl = new URL(normalizedUrl);
     const hostname = parsedUrl.hostname.replace(/^www\./i, "");
     const rootName = hostname.split(".")[0] ?? hostname;
+    const defaultReviewState = buildDefaultReviewState();
+
+    const resolvedDomainValue = extractString(
+      findDirectValueByAliases(payload, [
+        "domain",
+        "hostname",
+        "website",
+        "websiteUrl",
+        "website_url",
+        "url",
+        "siteUrl",
+        "site_url",
+      ]),
+    );
+    const resolvedDomain = resolvedDomainValue
+      ? getDomainFromValue(resolvedDomainValue)
+      : hostname;
+
+    const resolvedBrandName =
+      extractString(
+        findDirectValueByAliases(payload, [
+          "brandName",
+          "brand_name",
+          "companyName",
+          "company_name",
+          "company",
+          "businessName",
+          "business_name",
+          "name",
+        ]),
+      ) || toTitleCase(resolvedDomain.split(".")[0] ?? rootName);
+
+    const colors = normalizeColorList(
+      findDirectValueByAliases(payload, [
+        "colors",
+        "colourPalette",
+        "colorPalette",
+        "palette",
+        "brandColors",
+        "brand_colors",
+        "primaryColors",
+        "primary_colors",
+      ]),
+    );
+    const coreValues = normalizeStringList(
+      findDirectValueByAliases(payload, [
+        "coreValues",
+        "core_values",
+        "values",
+        "brandValues",
+        "brand_values",
+      ]) ??
+        findValueByAliases(payload, [
+          "coreValues",
+          "core_values",
+          "brandValues",
+          "brand_values",
+        ]),
+    );
+    const brandTones = normalizeStringList(
+      findDirectValueByAliases(payload, [
+        "brandTones",
+        "brand_tones",
+        "tone",
+        "tones",
+        "brandTone",
+        "brand_tone",
+        "voice",
+        "voiceAttributes",
+        "voice_attributes",
+      ]) ??
+        findValueByAliases(payload, [
+          "brandTones",
+          "brand_tones",
+          "brandTone",
+          "brand_tone",
+          "voice",
+          "voiceAttributes",
+          "voice_attributes",
+        ]),
+    );
+    const brandAesthetics = normalizeStringList(
+      findDirectValueByAliases(payload, [
+        "brandAesthetics",
+        "brand_aesthetics",
+        "aesthetic",
+        "aesthetics",
+        "visualStyle",
+        "visual_style",
+        "designStyle",
+        "design_style",
+      ]) ??
+        findValueByAliases(payload, [
+          "brandAesthetics",
+          "brand_aesthetics",
+          "visualStyle",
+          "visual_style",
+          "designStyle",
+          "design_style",
+        ]),
+    );
+    const targetMarkets = normalizeStringList(
+      findDirectValueByAliases(payload, [
+        "targetMarkets",
+        "target_markets",
+        "targetAudience",
+        "target_audience",
+        "audience",
+        "audiences",
+        "customerSegments",
+        "customer_segments",
+      ]) ??
+        findValueByAliases(payload, [
+          "targetMarkets",
+          "target_markets",
+          "targetAudience",
+          "target_audience",
+          "customerSegments",
+          "customer_segments",
+        ]),
+    );
+    const industryContexts = normalizeStringList(
+      findDirectValueByAliases(payload, [
+        "industryContexts",
+        "industry_contexts",
+        "industryContext",
+        "industry_context",
+        "industry",
+        "industries",
+        "category",
+        "categories",
+        "marketContext",
+        "market_context",
+      ]) ??
+        findValueByAliases(payload, [
+          "industryContexts",
+          "industry_contexts",
+          "industryContext",
+          "industry_context",
+          "marketContext",
+          "market_context",
+        ]),
+    );
+    const brandNarrative =
+      extractString(
+        findDirectValueByAliases(payload, [
+          "brandNarrative",
+          "brand_narrative",
+          "narrative",
+          "story",
+          "brandStory",
+          "brand_story",
+          "summary",
+          "brandSummary",
+          "brand_summary",
+          "brandDescription",
+          "brand_description",
+        ]),
+      ) ||
+      extractString(
+        findValueByAliases(payload, [
+          "brandNarrative",
+          "brand_narrative",
+          "brandStory",
+          "brand_story",
+          "brandSummary",
+          "brand_summary",
+          "brandDescription",
+          "brand_description",
+        ]),
+      ) ||
+      defaultReviewState.brandNarrative;
 
     reviewState.value = {
-      ...buildDefaultReviewState(),
-      brandName: toTitleCase(rootName),
-      domain: hostname,
+      ...defaultReviewState,
+      brandName: resolvedBrandName,
+      domain: resolvedDomain,
+      colors: colors.length ? colors : defaultReviewState.colors,
+      coreValues: coreValues.length ? coreValues : defaultReviewState.coreValues,
+      brandTones: brandTones.length
+        ? brandTones
+        : defaultReviewState.brandTones,
+      brandAesthetics: brandAesthetics.length
+        ? brandAesthetics
+        : defaultReviewState.brandAesthetics,
+      targetMarkets: targetMarkets.length
+        ? targetMarkets
+        : defaultReviewState.targetMarkets,
+      industryContexts: industryContexts.length
+        ? industryContexts
+        : defaultReviewState.industryContexts,
+      brandNarrative,
     };
   };
 
@@ -481,35 +890,24 @@ export const useBrandIntelligence = (
 
     try {
       const response = await fetch(
-        "https://jsonplaceholder.typicode.com/posts",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            websiteUrl: validationResult.value,
-            uploadedFiles: uploads.value.map((upload) => ({
-              name: upload.name,
-              status: upload.status,
-            })),
-          }),
-        },
+        `${API_BASE_URL}/analyze-brand?url=${encodeURIComponent(validationResult.value)}`,
       );
 
       if (!response.ok) {
-        throw new Error("Unable to submit brand extraction request.");
+        throw new Error("Unable to analyze brand from the provided URL.");
       }
 
       const data = await response.json();
       console.log("Extract Brand response:", data);
-      buildReviewState(validationResult.value);
+      buildReviewState(validationResult.value, data);
       currentStep.value = 2;
     } catch (error) {
       submitError.value =
         error instanceof Error
-          ? error.message
-          : "Something went wrong while submitting the brand extraction request.";
+          ? error.message === "Failed to fetch"
+            ? "Could not reach the local brand analyzer through the Vite proxy."
+            : error.message
+          : "Something went wrong while analyzing the brand.";
     } finally {
       isSubmitting.value = false;
     }

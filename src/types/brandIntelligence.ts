@@ -17,6 +17,11 @@ export type ReviewState = {
   domain: string;
   colors: string[];
   coreValues: string[];
+  brandTones: string[];
+  brandAesthetics: string[];
+  targetMarkets: string[];
+  industryContexts: string[];
+  brandNarrative: string;
 };
 
 export type ToastState = {

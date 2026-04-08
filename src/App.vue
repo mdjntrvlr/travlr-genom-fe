@@ -90,7 +90,7 @@ const iconMap = {
       </aside>
 
       <main class="bg-white px-10 py-2">
-        <div class="mx-auto max-w-[1115px]">
+        <div class="mx-auto max-w-[900px]">
           <RouterView />
         </div>
       </main>

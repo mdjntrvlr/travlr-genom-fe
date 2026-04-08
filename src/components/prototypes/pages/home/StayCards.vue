@@ -1,20 +1,15 @@
 <template>
   <div class="py-16 px-8 max-w-7xl mx-auto">
-    <div class="text-center mb-12">
-      <h2 class="text-4xl font-bold text-gray-900 mb-4">
+    <div class="text-left mb-12">
+      <h2 class="text-[24px] font-bold text-gray-900 mb-4">
         Find Your Happy Place, Anywhere.
       </h2>
-      <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+      <p class="text-[16px] text-[#374151]">
         Explore handpicked stays around the world with exclusive WanderJoy Travel rates and instant points.
       </p>
     </div>
-
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      <StayCard
-        v-for="(card, index) in stayCards"
-        :key="index"
-        :card="card"
-      />
+      <StayCard v-for="(card, index) in stayCards" :key="index" :card="card" @card-click="handleCardClick(card)" />
     </div>
   </div>
 </template>
@@ -55,4 +50,12 @@ const stayCards: StayCardType[] = [
     price: "$520"
   }
 ];
+
+const emit = defineEmits<{
+  anyCardClick: []
+}>()
+
+const handleCardClick = () => {
+  emit('anyCardClick');
+}
 </script>

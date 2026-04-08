@@ -2,10 +2,10 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 import BrandIntelligenceView from './views/BrandIntelligenceView.vue'
 import BrandRepositoryView from './views/BrandRepositoryView.vue'
-import CampaignPageView from './views/CampaignPageView.vue'
 import PrototypeHomeView from './views/PrototypeHomeView.vue'
 import PrototypeSearchView from './views/PrototypeSearchView.vue'
 import PrototypeDetailView from './views/PrototypeDetailView.vue'
+import PrototypeBuilder from './layouts/PrototypeBuilder.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -25,11 +25,6 @@ const router = createRouter({
       component: BrandRepositoryView,
     },
     {
-      path: '/campaign-page',
-      name: 'campaign-page',
-      component: CampaignPageView,
-    },
-    {
       path: '/prototype/home',
       name: 'prototypeHome',
       component: PrototypeHomeView,
@@ -43,6 +38,31 @@ const router = createRouter({
       path: '/prototype/detail',
       name: 'prototypeDetail',
       component: PrototypeDetailView,
+    },
+    {
+      path: '/prototype-builder',
+      component: PrototypeBuilder,
+      children: [
+        {
+          path: '',
+          redirect: '/prototype-builder/home',
+        },
+        {
+          path: 'home',
+          name: 'prototypeBuilderHome',
+          component: PrototypeHomeView,
+        },
+        {
+          path: 'search',
+          name: 'prototypeBuilderSearch',
+          component: PrototypeSearchView,
+        },
+        {
+          path: 'detail',
+          name: 'prototypeBuilderDetail',
+          component: PrototypeDetailView,
+        },
+      ],
     },
   ],
 })

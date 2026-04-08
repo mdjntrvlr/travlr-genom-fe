@@ -70,7 +70,7 @@
                         </div>
                     </div>
                     <div class="overflow-y-auto flex-1">
-                        <PrototypeHomeView />
+                        <RouterView />
                     </div>
                 </div>
             </div>
@@ -80,8 +80,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
-import ChatItem from "../components/ChatItem.vue";
-import PrototypeHomeView from "./PrototypeHomeView.vue";
+import ChatItem from '../components/ChatItem.vue';
 
 const isExportDropdownOpen = ref(false);
 const exportDropdownRef = ref(null);

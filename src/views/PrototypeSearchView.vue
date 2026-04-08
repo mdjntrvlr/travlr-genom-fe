@@ -1,4 +1,5 @@
 <template>
+  <Header />
   <div class="py-8 px-8 max-w-7xl mx-auto">
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
       <!-- Left Column: Filter -->
@@ -12,9 +13,12 @@
       </div>
     </div>
   </div>
+  <Footer />
 </template>
 
 <script setup lang="ts">
 import FilterComponent from "../components/prototypes/FilterComponent.vue";
+import Footer from "../components/prototypes/Footer.vue";
+import Header from "../components/prototypes/Header.vue";
 import List from "../components/prototypes/pages/search/List.vue";
 </script>

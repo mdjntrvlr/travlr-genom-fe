@@ -16,7 +16,7 @@ type NavItem = {
 const navItems: NavItem[] = [
   { label: "Brand Intelligence", to: "/brand-intelligence", icon: "menu-1" },
   { label: "Brand Repository", to: "/brand-repository", icon: "menu-2" },
-  { label: "Campaign Page", to: "/campaign-page", icon: "menu-3" },
+  { label: "WLP Prototype Page", to: "/prototype-builder", icon: "menu-3" },
 ];
 
 const iconMap = {

@@ -1,0 +1,212 @@
+<script setup lang="ts">
+import type { UploadItem } from "../../types/brandIntelligence";
+
+const props = defineProps<{
+  allowedFiles: string[];
+  setFileInput: (element: HTMLInputElement | null) => void;
+  uploadError: string;
+  uploads: UploadItem[];
+  websiteUrl: string;
+  websiteUrlError: string;
+  submitError: string;
+  isSubmitting: boolean;
+  openFilePicker: () => void;
+  removeUpload: (id: number) => void;
+  handleFileChange: (event: Event) => void;
+  validateWebsiteUrl: () => unknown;
+  handleWebsiteInput: () => void;
+  submitBrandExtraction: () => void;
+}>();
+
+const emit = defineEmits<{
+  (event: "update:websiteUrl", value: string): void;
+}>();
+
+const onWebsiteInput = (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  emit("update:websiteUrl", target.value);
+  props.handleWebsiteInput();
+};
+</script>
+
+<template>
+  <section class="mt-8 max-w-[1115px] rounded-2xl bg-slate-100 px-6 py-6">
+    <h2 class="text-[22px] font-semibold tracking-tight text-slate-900">
+      Extract Brand DNA
+    </h2>
+    <p class="mt-2 max-w-[770px] text-[16px] leading-7 text-slate-600">
+      Provide a URL or upload a file to automatically identify potential WLP
+      brand's voice and style.
+    </p>
+
+    <div class="mt-6">
+      <label class="block text-[16px] font-medium text-slate-900">
+        Website URL
+        <span class="font-normal text-slate-500">(Primary Source)</span>
+      </label>
+
+      <div
+        :class="[
+          'mt-2 flex h-[56px] max-w-[670px] items-center gap-3 rounded-xl bg-white px-5 shadow-sm',
+          websiteUrlError
+            ? 'border border-rose-400'
+            : 'border border-slate-300',
+        ]"
+      >
+        <svg
+          class="h-5 w-5 text-slate-400"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.9"
+          aria-hidden="true"
+        >
+          <path
+            d="M10 13.5 8.5 15a4 4 0 0 1-5.5-5.8l3-3a4 4 0 0 1 5.7 0M14 10.5 15.5 9a4 4 0 0 1 5.5 5.8l-3 3a4 4 0 0 1-5.7 0M9 15l6-6"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+        <input
+          :value="websiteUrl"
+          type="text"
+          placeholder="Enter primary brand website e.g mastercard.com"
+          class="w-full border-0 bg-transparent p-0 text-[16px] text-slate-700 outline-none placeholder:text-slate-400"
+          @input="onWebsiteInput"
+          @blur="validateWebsiteUrl"
+        />
+      </div>
+
+      <p
+        v-if="websiteUrlError"
+        class="mt-2 max-w-[820px] text-[12px] font-medium text-rose-600"
+      >
+        {{ websiteUrlError }}
+      </p>
+      <p class="mt-2 max-w-[820px] text-[12px] leading-5 text-slate-500">
+        We'll use this to understand the core identity and voice of the brand
+        before they expand into travel.
+      </p>
+    </div>
+
+    <div class="mt-5">
+      <p class="text-[16px] text-slate-700">
+        Or upload brand guideline or support files.
+      </p>
+
+      <input
+        :ref="setFileInput"
+        type="file"
+        accept=".png,.jpg,.jpeg,.svg,.pdf"
+        multiple
+        class="hidden"
+        @change="handleFileChange"
+      />
+
+      <div
+        v-if="uploads.length"
+        class="mt-3 w-full max-w-[50%] min-w-[340px] space-y-2"
+      >
+        <div
+          v-for="upload in uploads"
+          :key="upload.id"
+          class="relative overflow-hidden rounded-lg border border-slate-300 bg-white"
+        >
+          <div
+            v-if="upload.status === 'uploading'"
+            class="absolute inset-y-0 left-0 bg-cyan-50 transition-all duration-300"
+            :style="{ width: `${upload.progress}%` }"
+          ></div>
+
+          <div class="relative flex items-center gap-2.5 px-2.5 py-2">
+            <div
+              class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-slate-100 text-[10px] font-semibold text-slate-900"
+            >
+              {{ upload.label }}
+            </div>
+
+            <p
+              class="min-w-0 flex-1 truncate text-[13px] font-medium text-slate-700"
+            >
+              {{ upload.name }}
+            </p>
+
+            <p
+              v-if="upload.status === 'uploading'"
+              class="shrink-0 text-[12px] font-semibold text-slate-700"
+            >
+              {{ upload.progress }}%
+            </p>
+
+            <button
+              type="button"
+              class="shrink-0 cursor-pointer text-rose-500 transition hover:text-rose-600"
+              aria-label="Remove upload"
+              @click="removeUpload(upload.id)"
+            >
+              <svg
+                class="h-4.5 w-4.5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                aria-hidden="true"
+              >
+                <path
+                  d="M4 7h16M9 7V5h6v2m-7 4v6m4-6v6m4-6v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        class="mt-3 inline-flex items-center gap-3 rounded-xl border border-slate-300 bg-white px-5 py-3 text-[15px] font-medium text-slate-600 shadow-sm transition hover:bg-slate-50"
+        @click="openFilePicker"
+      >
+        <svg
+          class="h-5 w-5 text-slate-500"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.9"
+          aria-hidden="true"
+        >
+          <path
+            d="M12 16V7m0 0-3.5 3.5M12 7l3.5 3.5M6.5 16.5A4.5 4.5 0 0 1 7 7.5h.5A5.5 5.5 0 0 1 18 9a4 4 0 1 1-.5 7.97H16"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+        Upload Document
+      </button>
+
+      <p v-if="uploadError" class="mt-3 text-[12px] font-medium text-rose-600">
+        {{ uploadError }}
+      </p>
+      <p class="mt-3 text-[12px] text-slate-500">
+        Supports {{ allowedFiles.join(", ") }} only. File size &lt; 20MB.
+      </p>
+    </div>
+
+    <div class="mt-5 h-px max-w-[670px] bg-slate-300"></div>
+
+    <button
+      type="button"
+      :disabled="isSubmitting"
+      class="mt-5 inline-flex items-center rounded-full bg-cyan-500 px-6 py-3.5 text-[15px] font-semibold text-white transition hover:bg-cyan-600 disabled:cursor-not-allowed disabled:bg-cyan-400"
+      :class="isSubmitting ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'"
+      @click="submitBrandExtraction"
+    >
+      Extract Brand
+    </button>
+
+    <p v-if="submitError" class="mt-3 text-[12px] font-medium text-rose-600">
+      {{ submitError }}
+    </p>
+  </section>
+</template>

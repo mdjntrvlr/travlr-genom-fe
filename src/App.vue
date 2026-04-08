@@ -27,7 +27,7 @@ const iconMap = {
 </script>
 
 <template>
-  <div v-if="route.path.startsWith('/prototype')" class="min-h-screen bg-white">
+  <div v-if="route.path.startsWith('/prototype') || route.name === 'campaign-page'" class="min-h-screen bg-white">
     <RouterView />
   </div>
   <div v-else class="min-h-screen bg-white text-slate-700">

@@ -9,6 +9,7 @@ import type {
 const buildDefaultReviewState = (): ReviewState => ({
   brandName: "The Bali Bible",
   domain: "thebalibible.com",
+  logoCandidates: [],
   colors: ["#2DCCD3", "#FFFFFF", "#111827", "#1F2937"],
   coreValues: [
     "Authenticity",
@@ -236,6 +237,76 @@ const normalizeColorList = (value: unknown): string[] => {
   }
 
   return [];
+};
+
+const normalizeUrlToken = (value: string) => normalizeText(value);
+
+const isLikelyImageUrl = (value: string) =>
+  /^(https?:)?\/\//i.test(value) ||
+  value.startsWith("/") ||
+  value.startsWith("data:image/");
+
+const normalizeUrlList = (value: unknown): string[] => {
+  if (Array.isArray(value)) {
+    return uniqueStrings(
+      value
+        .flatMap((item) => {
+          if (typeof item === "string") {
+            return [item];
+          }
+
+          if (isRecord(item)) {
+            for (const key of ["url", "href", "src", "value"]) {
+              const nestedValue = item[key];
+
+              if (typeof nestedValue === "string") {
+                return [nestedValue];
+              }
+            }
+          }
+
+          const extractedValue = extractString(item);
+          return extractedValue ? [extractedValue] : [];
+        })
+        .map((item) => normalizeUrlToken(item))
+        .filter((item) => item && isLikelyImageUrl(item)),
+    );
+  }
+
+  if (typeof value === "string") {
+    const normalizedValue = normalizeUrlToken(value);
+    return normalizedValue && isLikelyImageUrl(normalizedValue)
+      ? [normalizedValue]
+      : [];
+  }
+
+  const extractedValue = extractString(value);
+  return extractedValue && isLikelyImageUrl(extractedValue)
+    ? [normalizeUrlToken(extractedValue)]
+    : [];
+};
+
+const getLogoCandidates = (payload: unknown) => {
+  const aliases = {
+    main: ["main_logo", "mainLogo", "logo", "primaryLogo", "primary_logo"],
+    invert: ["invert_logo", "invertLogo", "inverseLogo", "inverse_logo"],
+    favicon: ["favicon", "favIcon", "icon", "siteIcon", "site_icon"],
+  };
+
+  return uniqueStrings([
+    ...normalizeUrlList(
+      findDirectValueByAliases(payload, aliases.main) ??
+        findValueByAliases(payload, aliases.main),
+    ),
+    ...normalizeUrlList(
+      findDirectValueByAliases(payload, aliases.invert) ??
+        findValueByAliases(payload, aliases.invert),
+    ),
+    ...normalizeUrlList(
+      findDirectValueByAliases(payload, aliases.favicon) ??
+        findValueByAliases(payload, aliases.favicon),
+    ),
+  ]);
 };
 
 export const useBrandIntelligence = (
@@ -689,6 +760,7 @@ export const useBrandIntelligence = (
         "primary_colors",
       ]),
     );
+    const logoCandidates = getLogoCandidates(payload);
     const coreValues = normalizeStringList(
       findDirectValueByAliases(payload, [
         "coreValues",
@@ -822,6 +894,7 @@ export const useBrandIntelligence = (
       ...defaultReviewState,
       brandName: resolvedBrandName,
       domain: resolvedDomain,
+      logoCandidates,
       colors: colors.length ? colors : defaultReviewState.colors,
       coreValues: coreValues.length ? coreValues : defaultReviewState.coreValues,
       brandTones: brandTones.length

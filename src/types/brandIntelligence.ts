@@ -15,6 +15,7 @@ export type UploadItem = {
 export type ReviewState = {
   brandName: string;
   domain: string;
+  logoCandidates: string[];
   colors: string[];
   coreValues: string[];
   brandTones: string[];

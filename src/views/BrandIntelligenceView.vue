@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { computed, ref, watch } from "vue";
+
 import BaseModal from "../components/BaseModal.vue";
 import InfoTooltip from "../components/InfoTooltip.vue";
 import { useBrandIntelligence } from "../composables/useBrandIntelligence";
@@ -87,6 +89,40 @@ const {
   copyColor,
   submitBrandExtraction,
 } = useBrandIntelligence(uploads, showToast);
+
+const activeLogoIndex = ref(0);
+
+const logoCandidates = computed(() => reviewState.value.logoCandidates ?? []);
+
+const activeLogoUrl = computed(
+  () => logoCandidates.value[activeLogoIndex.value] ?? "",
+);
+
+const brandInitials = computed(() =>
+  reviewState.value.brandName
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join(""),
+);
+
+const handleBrandLogoError = () => {
+  if (activeLogoIndex.value < logoCandidates.value.length - 1) {
+    activeLogoIndex.value += 1;
+    return;
+  }
+
+  activeLogoIndex.value = logoCandidates.value.length;
+};
+
+watch(
+  logoCandidates,
+  () => {
+    activeLogoIndex.value = 0;
+  },
+  { immediate: true },
+);
 </script>
 
 <template>
@@ -373,7 +409,23 @@ const {
           </div>
 
           <div class="mt-3 flex items-center gap-4">
-            <div class="h-20 w-20 rounded-xl bg-slate-800"></div>
+            <div
+              class="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-800"
+            >
+              <img
+                v-if="activeLogoUrl"
+                :src="activeLogoUrl"
+                :alt="`${reviewState.brandName} logo`"
+                class="h-full w-full object-contain bg-white"
+                @error="handleBrandLogoError"
+              />
+              <span
+                v-else
+                class="text-[22px] font-semibold tracking-[0.08em] text-white"
+              >
+                {{ brandInitials || "BI" }}
+              </span>
+            </div>
             <div>
               <p
                 class="text-[28px] font-semibold tracking-tight text-slate-900"

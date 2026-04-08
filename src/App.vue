@@ -1,8 +1,11 @@
 <script setup lang="ts">
+import { useRoute } from 'vue-router'
 import travlrLogo from "./assets/travlr-logo.png";
 import iconMenu1 from "./assets/menu-1.svg";
 import iconMenu2 from "./assets/menu-2.svg";
 import iconMenu3 from "./assets/menu-3.svg";
+
+const route = useRoute()
 
 type NavItem = {
   label: string;
@@ -24,7 +27,10 @@ const iconMap = {
 </script>
 
 <template>
-  <div class="min-h-screen bg-white text-slate-700">
+  <div v-if="route.path.startsWith('/prototype')" class="min-h-screen bg-white">
+    <RouterView />
+  </div>
+  <div v-else class="min-h-screen bg-white text-slate-700">
     <header class="border-b border-slate-200 bg-white">
       <div class="flex h-16 items-center justify-between px-10">
         <div class="flex items-center gap-5">

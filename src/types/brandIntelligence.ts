@@ -21,6 +21,7 @@ export type ReviewState = {
   brandAesthetics: string[];
   targetMarkets: string[];
   industryContexts: string[];
+  brandNarrative: string;
 };
 
 export type ToastState = {

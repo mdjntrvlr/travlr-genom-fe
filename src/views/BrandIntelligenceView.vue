@@ -29,6 +29,7 @@ const {
   isBrandAestheticModalOpen,
   isTargetMarketModalOpen,
   isIndustryContextModalOpen,
+  isBrandNarrativeModalOpen,
   newColorHex,
   newColorError,
   newCoreValue,
@@ -41,6 +42,8 @@ const {
   newTargetMarketError,
   newIndustryContext,
   newIndustryContextError,
+  brandNarrativeDraft,
+  brandNarrativeError,
   reviewState,
   steps,
   validateWebsiteUrl,
@@ -57,18 +60,22 @@ const {
   closeTargetMarketModal,
   openIndustryContextModal,
   closeIndustryContextModal,
+  openBrandNarrativeModal,
+  closeBrandNarrativeModal,
   handleColorInput,
   handleCoreValueInput,
   handleBrandToneInput,
   handleBrandAestheticInput,
   handleTargetMarketInput,
   handleIndustryContextInput,
+  handleBrandNarrativeInput,
   saveCustomColor,
   saveCoreValue,
   saveBrandTone,
   saveBrandAesthetic,
   saveTargetMarket,
   saveIndustryContext,
+  saveBrandNarrative,
   removeColor,
   removeCoreValue,
   removeBrandTone,
@@ -719,6 +726,32 @@ const {
             </div>
           </div>
         </div>
+
+        <div class="mt-8">
+          <div class="flex items-center justify-between gap-4">
+            <div class="flex items-center gap-2">
+              <h3 class="text-[16px] font-semibold text-slate-900">
+                Brand Narrative
+              </h3>
+              <InfoTooltip
+                message="The longer-form story that captures what the brand stands for, how it speaks, and why it matters."
+              />
+            </div>
+            <button
+              type="button"
+              class="text-[14px] font-medium text-slate-500 cursor-pointer"
+              @click="openBrandNarrativeModal"
+            >
+              Edit Narrative
+            </button>
+          </div>
+
+          <div class="mt-3 rounded-2xl">
+            <p class="text-[14px] leading-7 whitespace-pre-line text-slate-700">
+              {{ reviewState.brandNarrative }}
+            </p>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -1054,6 +1087,59 @@ const {
             type="button"
             class="inline-flex min-w-[160px] items-center justify-center rounded-full bg-cyan-500 px-7 py-3 text-[16px] font-semibold text-white transition hover:bg-cyan-600"
             @click="saveIndustryContext"
+          >
+            Save
+          </button>
+        </div>
+      </template>
+    </BaseModal>
+
+    <BaseModal
+      :open="isBrandNarrativeModalOpen"
+      title="Edit Brand Narrative"
+      max-width-class="max-w-4xl"
+      @close="closeBrandNarrativeModal"
+    >
+      <p class="mt-4 max-w-3xl text-[15px] leading-7 text-slate-600">
+        Refine the longer-form story that describes your brand voice, purpose,
+        and point of view.
+      </p>
+
+      <div
+        :class="[
+          'mt-8 rounded-[1.15rem] border bg-white p-5 shadow-sm',
+          brandNarrativeError ? 'border-rose-400' : 'border-slate-300',
+        ]"
+      >
+        <textarea
+          :value="brandNarrativeDraft"
+          rows="8"
+          class="min-h-[220px] w-full resize-none border-0 bg-transparent p-0 text-[16px] leading-7 text-slate-900 outline-none placeholder:text-slate-400"
+          placeholder="Describe the brand story, positioning, and perspective..."
+          @input="handleBrandNarrativeInput"
+        ></textarea>
+      </div>
+
+      <p
+        v-if="brandNarrativeError"
+        class="mt-3 text-[12px] font-medium text-rose-600"
+      >
+        {{ brandNarrativeError }}
+      </p>
+
+      <template #footer>
+        <div class="flex items-center gap-4">
+          <button
+            type="button"
+            class="inline-flex min-w-[160px] items-center justify-center rounded-full border border-slate-300 bg-white px-7 py-3 text-[16px] font-semibold text-slate-700 transition hover:bg-slate-50"
+            @click="closeBrandNarrativeModal"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="inline-flex min-w-[160px] items-center justify-center rounded-full bg-cyan-500 px-7 py-3 text-[16px] font-semibold text-white transition hover:bg-cyan-600"
+            @click="saveBrandNarrative"
           >
             Save
           </button>

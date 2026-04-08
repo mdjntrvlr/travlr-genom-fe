@@ -22,6 +22,8 @@ const buildDefaultReviewState = (): ReviewState => ({
   brandAesthetics: ["Minimalist", "Contemporary", "Tropical", "Refined"],
   targetMarkets: ["Young Professionals", "Luxury Travelers", "Digital Nomads"],
   industryContexts: ["Hospitality", "Travel Media", "Destination Discovery"],
+  brandNarrative:
+    "The Bali Bible is a trusted travel companion for modern explorers seeking curated island experiences. It blends insider knowledge with polished editorial storytelling to make discovery feel effortless, aspirational, and deeply connected to local culture.",
 });
 
 export const useBrandIntelligence = (
@@ -52,6 +54,9 @@ export const useBrandIntelligence = (
   const isIndustryContextModalOpen = ref(false);
   const newIndustryContext = ref("");
   const newIndustryContextError = ref("");
+  const isBrandNarrativeModalOpen = ref(false);
+  const brandNarrativeDraft = ref("");
+  const brandNarrativeError = ref("");
 
   const steps: StepItem[] = [
     { number: 1, label: "Brand Extraction" },
@@ -192,6 +197,18 @@ export const useBrandIntelligence = (
     newIndustryContextError.value = "";
   };
 
+  const openBrandNarrativeModal = () => {
+    isBrandNarrativeModalOpen.value = true;
+    brandNarrativeDraft.value = reviewState.value.brandNarrative;
+    brandNarrativeError.value = "";
+  };
+
+  const closeBrandNarrativeModal = () => {
+    isBrandNarrativeModalOpen.value = false;
+    brandNarrativeDraft.value = "";
+    brandNarrativeError.value = "";
+  };
+
   const handleColorInput = (event: Event) => {
     const target = event.target as HTMLInputElement;
     let sanitizedValue = target.value.replace(/[^0-9a-fA-F]/g, "").slice(0, 6);
@@ -234,6 +251,12 @@ export const useBrandIntelligence = (
     const target = event.target as HTMLInputElement;
     newIndustryContext.value = target.value;
     newIndustryContextError.value = "";
+  };
+
+  const handleBrandNarrativeInput = (event: Event) => {
+    const target = event.target as HTMLTextAreaElement;
+    brandNarrativeDraft.value = target.value;
+    brandNarrativeError.value = "";
   };
 
   const saveCustomColor = () => {
@@ -366,6 +389,19 @@ export const useBrandIntelligence = (
     showToast(`Added ${normalizedValue} to industry context`, "success");
   };
 
+  const saveBrandNarrative = () => {
+    const normalizedValue = brandNarrativeDraft.value.trim();
+
+    if (!normalizedValue) {
+      brandNarrativeError.value = "Enter brand narrative before saving.";
+      return;
+    }
+
+    reviewState.value.brandNarrative = normalizedValue;
+    closeBrandNarrativeModal();
+    showToast("Updated brand narrative", "success");
+  };
+
   const toTitleCase = (value: string) => {
     return value
       .split(/[-.\s]+/)
@@ -491,6 +527,7 @@ export const useBrandIntelligence = (
     isBrandAestheticModalOpen,
     isTargetMarketModalOpen,
     isIndustryContextModalOpen,
+    isBrandNarrativeModalOpen,
     newColorHex,
     newColorError,
     newCoreValue,
@@ -503,6 +540,8 @@ export const useBrandIntelligence = (
     newTargetMarketError,
     newIndustryContext,
     newIndustryContextError,
+    brandNarrativeDraft,
+    brandNarrativeError,
     reviewState,
     steps,
     validateWebsiteUrl,
@@ -519,18 +558,22 @@ export const useBrandIntelligence = (
     closeTargetMarketModal,
     openIndustryContextModal,
     closeIndustryContextModal,
+    openBrandNarrativeModal,
+    closeBrandNarrativeModal,
     handleColorInput,
     handleCoreValueInput,
     handleBrandToneInput,
     handleBrandAestheticInput,
     handleTargetMarketInput,
     handleIndustryContextInput,
+    handleBrandNarrativeInput,
     saveCustomColor,
     saveCoreValue,
     saveBrandTone,
     saveBrandAesthetic,
     saveTargetMarket,
     saveIndustryContext,
+    saveBrandNarrative,
     removeColor,
     removeCoreValue,
     removeBrandTone,

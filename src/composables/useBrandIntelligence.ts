@@ -614,6 +614,15 @@ export const useBrandIntelligence = (
     showToast("Updated brand narrative", "success");
   };
 
+  const saveBrandReview = () => {
+    showToast("Brand review saved", "success");
+  };
+
+  const backToExtraction = () => {
+    submitError.value = "";
+    currentStep.value = steps[0]?.number ?? 1;
+  };
+
   const toTitleCase = (value: string) => {
     return value
       .split(/[-.\s]+/)
@@ -972,6 +981,8 @@ export const useBrandIntelligence = (
     saveTargetMarket,
     saveIndustryContext,
     saveBrandNarrative,
+    saveBrandReview,
+    backToExtraction,
     removeColor,
     removeCoreValue,
     removeBrandTone,

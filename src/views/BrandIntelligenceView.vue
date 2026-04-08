@@ -76,6 +76,8 @@ const {
   saveTargetMarket,
   saveIndustryContext,
   saveBrandNarrative,
+  saveBrandReview,
+  backToExtraction,
   removeColor,
   removeCoreValue,
   removeBrandTone,
@@ -753,9 +755,39 @@ const {
           </div>
         </div>
       </div>
+      <div
+        class="flex flex-col gap-4 rounded-[1.5rem] bg-slate-100 py-5 sm:flex-row sm:items-center sm:justify-between"
+      >
+        <button
+          type="button"
+          class="inline-flex w-auto items-center justify-center rounded-full bg-cyan-500 py-4 px-5 text-base font-semibold text-white transition hover:bg-cyan-600 cursor-pointer"
+          @click="saveBrandReview"
+        >
+          Continue and Save
+        </button>
+
+        <button
+          type="button"
+          class="text-left text-sm font-medium text-slate-700 transition hover:text-slate-900 sm:text-right cursor-pointer"
+          @click="backToExtraction"
+        >
+          Back to Extraction
+        </button>
+      </div>
     </section>
 
-    <div class="mt-36 h-px bg-slate-200"></div>
+    <footer
+      v-if="currentStep !== 1"
+      class="mt-10 flex flex-col gap-5 text-slate-400"
+    >
+      <div class="h-px bg-slate-200"></div>
+      <div
+        class="flex flex-col gap-3 text-sm sm:flex-row sm:items-center sm:justify-between sm:text-[16px]"
+      >
+        <p>&copy; 2026 TRAVLR Pty Ltd. All Rights Reserved.</p>
+        <p>V 1.0</p>
+      </div>
+    </footer>
 
     <BaseModal
       :open="isColorModalOpen"

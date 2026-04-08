@@ -11,7 +11,7 @@ withDefaults(
 </script>
 
 <template>
-  <div class="group relative inline-flex">
+  <div class="group relative inline-flex info-tooltip">
     <slot>
       <span
         class="flex h-5 w-5 cursor-help items-center justify-center rounded-full bg-slate-600 text-[11px] font-semibold text-white"
@@ -22,17 +22,18 @@ withDefaults(
 
     <div
       :class="[
-        'pointer-events-none absolute bottom-[calc(100%+14px)] left-1/2 z-20 -translate-x-1/2 rounded-3xl bg-slate-800 px-5 py-4 text-white opacity-0 shadow-2xl transition duration-150 group-hover:opacity-100',
+        'pointer-events-none absolute bottom-[calc(100%+14px)] left-1/2 z-20 -translate-x-1/2 bg-slate-800 px-3 py-2 text-white shadow-2xl transition duration-150 opacity-0 group-hover:opacity-100 rounded-lg',
         widthClass,
       ]"
+      class="info-tooltip-cloud"
     >
-      <div class="flex items-start gap-4">
+      <div class="flex items-center gap-4">
         <span
-          class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 border-white text-[16px] font-semibold"
+          class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center border-2 border-white text-xs font-semibold rounded-full"
         >
           i
         </span>
-        <p class="text-[14px] leading-7 text-slate-100">
+        <p class="text-xs text-slate-100">
           {{ message }}
         </p>
       </div>

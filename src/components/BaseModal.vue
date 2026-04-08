@@ -47,7 +47,7 @@ const handleBackdropClick = () => {
       <button
         v-if="showCloseButton"
         type="button"
-        class="absolute right-6 top-6 text-slate-400 transition hover:text-slate-600"
+        class="absolute right-6 top-6 text-slate-400 transition hover:text-slate-600 cursor-pointer"
         @click="$emit('close')"
         aria-label="Close modal"
       >
@@ -55,7 +55,10 @@ const handleBackdropClick = () => {
       </button>
 
       <div :class="['px-8 py-7', contentClass]">
-        <h3 v-if="title" class="text-[22px] font-semibold tracking-tight text-slate-900">
+        <h3
+          v-if="title"
+          class="text-[22px] font-semibold tracking-tight text-slate-900"
+        >
           {{ title }}
         </h3>
 

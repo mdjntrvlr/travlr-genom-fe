@@ -24,18 +24,57 @@ const {
   submitError,
   isSubmitting,
   isColorModalOpen,
+  isCoreValueModalOpen,
+  isBrandToneModalOpen,
+  isBrandAestheticModalOpen,
+  isTargetMarketModalOpen,
+  isIndustryContextModalOpen,
   newColorHex,
   newColorError,
+  newCoreValue,
+  newCoreValueError,
+  newBrandTone,
+  newBrandToneError,
+  newBrandAesthetic,
+  newBrandAestheticError,
+  newTargetMarket,
+  newTargetMarketError,
+  newIndustryContext,
+  newIndustryContextError,
   reviewState,
   steps,
   validateWebsiteUrl,
   handleWebsiteInput,
   openColorModal,
   closeColorModal,
+  openCoreValueModal,
+  closeCoreValueModal,
+  openBrandToneModal,
+  closeBrandToneModal,
+  openBrandAestheticModal,
+  closeBrandAestheticModal,
+  openTargetMarketModal,
+  closeTargetMarketModal,
+  openIndustryContextModal,
+  closeIndustryContextModal,
   handleColorInput,
+  handleCoreValueInput,
+  handleBrandToneInput,
+  handleBrandAestheticInput,
+  handleTargetMarketInput,
+  handleIndustryContextInput,
   saveCustomColor,
+  saveCoreValue,
+  saveBrandTone,
+  saveBrandAesthetic,
+  saveTargetMarket,
+  saveIndustryContext,
   removeColor,
   removeCoreValue,
+  removeBrandTone,
+  removeBrandAesthetic,
+  removeTargetMarket,
+  removeIndustryContext,
   copyColor,
   submitBrandExtraction,
 } = useBrandIntelligence(uploads, showToast);
@@ -229,7 +268,7 @@ const {
 
               <button
                 type="button"
-                class="shrink-0 text-rose-500 transition hover:text-rose-600"
+                class="shrink-0 text-rose-500 transition hover:text-rose-600 cursor-pointer"
                 @click="removeUpload(upload.id)"
                 aria-label="Remove upload"
               >
@@ -341,11 +380,9 @@ const {
           <div class="flex items-center justify-between gap-4">
             <div class="flex items-center gap-2">
               <h3 class="text-[16px] font-semibold text-slate-900">Colours</h3>
-              <span
-                class="flex h-5 w-5 items-center justify-center rounded-full bg-slate-600 text-[11px] font-semibold text-white"
-              >
-                i
-              </span>
+              <InfoTooltip
+                message="Primary pallete identified from the source. These guide the visual theme of generated assets."
+              />
             </div>
             <button
               type="button"
@@ -384,7 +421,7 @@ const {
                 <span class="h-4 w-px bg-slate-200"></span>
                 <button
                   type="button"
-                  class="text-slate-500 transition hover:text-slate-700"
+                  class="text-slate-500 transition hover:text-slate-700 cursor-pointer"
                   @click="removeColor(color)"
                   aria-label="Remove color"
                 >
@@ -414,15 +451,14 @@ const {
               <h3 class="text-[16px] font-semibold text-slate-900">
                 Core value
               </h3>
-              <span
-                class="flex h-5 w-5 items-center justify-center rounded-full bg-slate-600 text-[11px] font-semibold text-white"
-              >
-                i
-              </span>
+              <InfoTooltip
+                message="Fundamental beliefs that drive the brand's message and focus."
+              />
             </div>
             <button
               type="button"
-              class="text-[14px] font-medium text-slate-500"
+              class="text-[14px] font-medium text-slate-500 cursor-pointer"
+              @click="openCoreValueModal"
             >
               Add item
             </button>
@@ -440,8 +476,228 @@ const {
                 }}</span>
                 <button
                   type="button"
-                  class="text-slate-500 transition hover:text-slate-700"
+                  class="text-slate-500 transition hover:text-slate-700 cursor-pointer"
                   @click="removeCoreValue(value)"
+                  :aria-label="`Remove ${value}`"
+                >
+                  <svg
+                    class="h-4 w-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M6 6l12 12M18 6 6 18"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-8">
+          <div class="flex items-center justify-between gap-4">
+            <div class="flex items-center gap-2">
+              <h3 class="text-[16px] font-semibold text-slate-900">
+                Brand tone
+              </h3>
+              <InfoTooltip
+                message="The emotional quality and personality of the brand's communication style."
+              />
+            </div>
+            <button
+              type="button"
+              class="text-[14px] font-medium text-slate-500 cursor-pointer"
+              @click="openBrandToneModal"
+            >
+              Add item
+            </button>
+          </div>
+
+          <div class="mt-3 rounded-2xl bg-slate-100 p-4">
+            <div class="flex flex-wrap gap-3">
+              <div
+                v-for="value in reviewState.brandTones"
+                :key="value"
+                class="flex items-center gap-2 rounded-full bg-white px-3 py-2"
+              >
+                <span class="text-[14px] font-medium text-slate-800">{{
+                  value
+                }}</span>
+                <button
+                  type="button"
+                  class="text-slate-500 transition hover:text-slate-700 cursor-pointer"
+                  @click="removeBrandTone(value)"
+                  :aria-label="`Remove ${value}`"
+                >
+                  <svg
+                    class="h-4 w-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M6 6l12 12M18 6 6 18"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-8">
+          <div class="flex items-center justify-between gap-4">
+            <div class="flex items-center gap-2">
+              <h3 class="text-[16px] font-semibold text-slate-900">
+                Brand Aesthetic
+              </h3>
+              <InfoTooltip
+                message="The visual aesthetic used to filter relevant image assets from Shutterstock, ensuring generated visuals align with the brand's style."
+              />
+            </div>
+            <button
+              type="button"
+              class="text-[14px] font-medium text-slate-500 cursor-pointer"
+              @click="openBrandAestheticModal"
+            >
+              Add item
+            </button>
+          </div>
+
+          <div class="mt-3 rounded-2xl bg-slate-100 p-4">
+            <div class="flex flex-wrap gap-3">
+              <div
+                v-for="value in reviewState.brandAesthetics"
+                :key="value"
+                class="flex items-center gap-2 rounded-full bg-white px-3 py-2"
+              >
+                <span class="text-[14px] font-medium text-slate-800">{{
+                  value
+                }}</span>
+                <button
+                  type="button"
+                  class="text-slate-500 transition hover:text-slate-700 cursor-pointer"
+                  @click="removeBrandAesthetic(value)"
+                  :aria-label="`Remove ${value}`"
+                >
+                  <svg
+                    class="h-4 w-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M6 6l12 12M18 6 6 18"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-8">
+          <div class="flex items-center justify-between gap-4">
+            <div class="flex items-center gap-2">
+              <h3 class="text-[16px] font-semibold text-slate-900">
+                Target Market
+              </h3>
+              <InfoTooltip
+                message="The audience segments and customer groups the brand is best positioned to serve."
+              />
+            </div>
+            <button
+              type="button"
+              class="text-[14px] font-medium text-slate-500 cursor-pointer"
+              @click="openTargetMarketModal"
+            >
+              Add item
+            </button>
+          </div>
+
+          <div class="mt-3 rounded-2xl bg-slate-100 p-4">
+            <div class="flex flex-wrap gap-3">
+              <div
+                v-for="value in reviewState.targetMarkets"
+                :key="value"
+                class="flex items-center gap-2 rounded-full bg-white px-3 py-2"
+              >
+                <span class="text-[14px] font-medium text-slate-800">{{
+                  value
+                }}</span>
+                <button
+                  type="button"
+                  class="text-slate-500 transition hover:text-slate-700 cursor-pointer"
+                  @click="removeTargetMarket(value)"
+                  :aria-label="`Remove ${value}`"
+                >
+                  <svg
+                    class="h-4 w-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M6 6l12 12M18 6 6 18"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-8">
+          <div class="flex items-center justify-between gap-4">
+            <div class="flex items-center gap-2">
+              <h3 class="text-[16px] font-semibold text-slate-900">
+                Industry Context
+              </h3>
+              <InfoTooltip
+                message="The broader industry space, category signals, and market environment that shape the brand."
+              />
+            </div>
+            <button
+              type="button"
+              class="text-[14px] font-medium text-slate-500 cursor-pointer"
+              @click="openIndustryContextModal"
+            >
+              Add item
+            </button>
+          </div>
+
+          <div class="mt-3 rounded-2xl bg-slate-100 p-4">
+            <div class="flex flex-wrap gap-3">
+              <div
+                v-for="value in reviewState.industryContexts"
+                :key="value"
+                class="flex items-center gap-2 rounded-full bg-white px-3 py-2"
+              >
+                <span class="text-[14px] font-medium text-slate-800">{{
+                  value
+                }}</span>
+                <button
+                  type="button"
+                  class="text-slate-500 transition hover:text-slate-700 cursor-pointer"
+                  @click="removeIndustryContext(value)"
                   :aria-label="`Remove ${value}`"
                 >
                   <svg
@@ -474,46 +730,46 @@ const {
       max-width-class="max-w-3xl"
       @close="closeColorModal"
     >
-        <p class="mt-4 max-w-2xl text-[15px] leading-7 text-slate-600">
-          Provide a HEX code to define your brand&apos;s visual palette. This
-          helps the AI suggest relevant image themes and aesthetics.
-        </p>
+      <p class="mt-4 max-w-2xl text-[15px] leading-7 text-slate-600">
+        Provide a HEX code to define your brand&apos;s visual palette. This
+        helps the AI suggest relevant image themes and aesthetics.
+      </p>
 
-        <div class="mt-8 flex items-center gap-3">
-          <div
-            class="h-[64px] w-[64px] shrink-0 rounded-[0.9rem] border border-slate-200 shadow-sm"
-            :style="{
-              backgroundColor: /^#[0-9A-F]{6}$/i.test(newColorHex)
-                ? newColorHex
-                : '#FFFFFF',
-            }"
-          ></div>
+      <div class="mt-8 flex items-center gap-3">
+        <div
+          class="h-[64px] w-[64px] shrink-0 rounded-[0.9rem] border border-slate-200 shadow-sm"
+          :style="{
+            backgroundColor: /^#[0-9A-F]{6}$/i.test(newColorHex)
+              ? newColorHex
+              : '#FFFFFF',
+          }"
+        ></div>
 
-          <div
-            :class="[
-              'flex h-[64px] flex-1 items-center rounded-[0.9rem] border bg-white px-5 shadow-sm',
-              newColorError ? 'border-rose-400' : 'border-slate-300',
-            ]"
-          >
-            <span class="text-[18px] text-slate-500">#</span>
-            <input
-              :value="newColorHex.replace(/^#/, '')"
-              type="text"
-              inputmode="text"
-              maxlength="6"
-              class="ml-3 w-full border-0 bg-transparent p-0 text-[18px] font-medium uppercase text-slate-900 outline-none placeholder:text-slate-400"
-              placeholder="01B2C9"
-              @input="handleColorInput"
-            />
-          </div>
-        </div>
-
-        <p
-          v-if="newColorError"
-          class="mt-3 text-[12px] font-medium text-rose-600"
+        <div
+          :class="[
+            'flex h-[64px] flex-1 items-center rounded-[0.9rem] border bg-white px-5 shadow-sm',
+            newColorError ? 'border-rose-400' : 'border-slate-300',
+          ]"
         >
-          {{ newColorError }}
-        </p>
+          <span class="text-[18px] text-slate-500">#</span>
+          <input
+            :value="newColorHex.replace(/^#/, '')"
+            type="text"
+            inputmode="text"
+            maxlength="6"
+            class="ml-3 w-full border-0 bg-transparent p-0 text-[18px] font-medium uppercase text-slate-900 outline-none placeholder:text-slate-400"
+            placeholder="01B2C9"
+            @input="handleColorInput"
+          />
+        </div>
+      </div>
+
+      <p
+        v-if="newColorError"
+        class="mt-3 text-[12px] font-medium text-rose-600"
+      >
+        {{ newColorError }}
+      </p>
 
       <template #footer>
         <div class="flex items-center gap-4">
@@ -528,6 +784,276 @@ const {
             type="button"
             class="inline-flex min-w-[160px] items-center justify-center rounded-full bg-cyan-500 px-7 py-3 text-[16px] font-semibold text-white transition hover:bg-cyan-600"
             @click="saveCustomColor"
+          >
+            Save
+          </button>
+        </div>
+      </template>
+    </BaseModal>
+
+    <BaseModal
+      :open="isCoreValueModalOpen"
+      title="Add New Attribute"
+      max-width-class="max-w-3xl"
+      @close="closeCoreValueModal"
+    >
+      <p class="mt-4 max-w-2xl text-[15px] leading-7 text-slate-600">
+        Provide additional keywords to sharpen the AI understanding of your
+        brand identity.
+      </p>
+
+      <div
+        :class="[
+          'mt-8 flex h-[64px] items-center rounded-[0.9rem] border bg-white px-5 shadow-sm',
+          newCoreValueError ? 'border-rose-400' : 'border-slate-300',
+        ]"
+      >
+        <input
+          :value="newCoreValue"
+          type="text"
+          class="w-full border-0 bg-transparent p-0 text-[18px] font-medium text-slate-900 outline-none placeholder:text-slate-400"
+          placeholder="e.g., Adventure-seeker or Minimalist"
+          @input="handleCoreValueInput"
+          @keydown.enter.prevent="saveCoreValue"
+        />
+      </div>
+
+      <p
+        v-if="newCoreValueError"
+        class="mt-3 text-[12px] font-medium text-rose-600"
+      >
+        {{ newCoreValueError }}
+      </p>
+
+      <template #footer>
+        <div class="flex items-center gap-4">
+          <button
+            type="button"
+            class="inline-flex min-w-[160px] items-center justify-center rounded-full border border-slate-300 bg-white px-7 py-3 text-[16px] font-semibold text-slate-700 transition hover:bg-slate-50"
+            @click="closeCoreValueModal"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="inline-flex min-w-[160px] items-center justify-center rounded-full bg-cyan-500 px-7 py-3 text-[16px] font-semibold text-white transition hover:bg-cyan-600"
+            @click="saveCoreValue"
+          >
+            Save
+          </button>
+        </div>
+      </template>
+    </BaseModal>
+
+    <BaseModal
+      :open="isBrandToneModalOpen"
+      title="Add New Attribute"
+      max-width-class="max-w-3xl"
+      @close="closeBrandToneModal"
+    >
+      <p class="mt-4 max-w-2xl text-[15px] leading-7 text-slate-600">
+        Provide additional keywords to sharpen the AI understanding of your
+        brand identity.
+      </p>
+
+      <div
+        :class="[
+          'mt-8 flex h-[64px] items-center rounded-[0.9rem] border bg-white px-5 shadow-sm',
+          newBrandToneError ? 'border-rose-400' : 'border-slate-300',
+        ]"
+      >
+        <input
+          :value="newBrandTone"
+          type="text"
+          class="w-full border-0 bg-transparent p-0 text-[18px] font-medium text-slate-900 outline-none placeholder:text-slate-400"
+          placeholder="e.g., Friendly or Bold"
+          @input="handleBrandToneInput"
+          @keydown.enter.prevent="saveBrandTone"
+        />
+      </div>
+
+      <p
+        v-if="newBrandToneError"
+        class="mt-3 text-[12px] font-medium text-rose-600"
+      >
+        {{ newBrandToneError }}
+      </p>
+
+      <template #footer>
+        <div class="flex items-center gap-4">
+          <button
+            type="button"
+            class="inline-flex min-w-[160px] items-center justify-center rounded-full border border-slate-300 bg-white px-7 py-3 text-[16px] font-semibold text-slate-700 transition hover:bg-slate-50"
+            @click="closeBrandToneModal"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="inline-flex min-w-[160px] items-center justify-center rounded-full bg-cyan-500 px-7 py-3 text-[16px] font-semibold text-white transition hover:bg-cyan-600"
+            @click="saveBrandTone"
+          >
+            Save
+          </button>
+        </div>
+      </template>
+    </BaseModal>
+
+    <BaseModal
+      :open="isBrandAestheticModalOpen"
+      title="Add New Attribute"
+      max-width-class="max-w-3xl"
+      @close="closeBrandAestheticModal"
+    >
+      <p class="mt-4 max-w-2xl text-[15px] leading-7 text-slate-600">
+        Provide additional keywords to sharpen the AI understanding of your
+        brand indentiy.
+      </p>
+
+      <div
+        :class="[
+          'mt-8 flex h-[64px] items-center rounded-[0.9rem] border bg-white px-5 shadow-sm',
+          newBrandAestheticError ? 'border-rose-400' : 'border-slate-300',
+        ]"
+      >
+        <input
+          :value="newBrandAesthetic"
+          type="text"
+          class="w-full border-0 bg-transparent p-0 text-[18px] font-medium text-slate-900 outline-none placeholder:text-slate-400"
+          placeholder="e.g., Adventure-seeker or Luxury"
+          @input="handleBrandAestheticInput"
+          @keydown.enter.prevent="saveBrandAesthetic"
+        />
+      </div>
+
+      <p
+        v-if="newBrandAestheticError"
+        class="mt-3 text-[12px] font-medium text-rose-600"
+      >
+        {{ newBrandAestheticError }}
+      </p>
+
+      <template #footer>
+        <div class="flex items-center gap-4">
+          <button
+            type="button"
+            class="inline-flex min-w-[160px] items-center justify-center rounded-full border border-slate-300 bg-white px-7 py-3 text-[16px] font-semibold text-slate-700 transition hover:bg-slate-50"
+            @click="closeBrandAestheticModal"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="inline-flex min-w-[160px] items-center justify-center rounded-full bg-cyan-500 px-7 py-3 text-[16px] font-semibold text-white transition hover:bg-cyan-600"
+            @click="saveBrandAesthetic"
+          >
+            Save
+          </button>
+        </div>
+      </template>
+    </BaseModal>
+
+    <BaseModal
+      :open="isTargetMarketModalOpen"
+      title="Add New Attribute"
+      max-width-class="max-w-3xl"
+      @close="closeTargetMarketModal"
+    >
+      <p class="mt-4 max-w-2xl text-[15px] leading-7 text-slate-600">
+        Provide additional keywords to sharpen the AI understanding of your
+        brand identity.
+      </p>
+
+      <div
+        :class="[
+          'mt-8 flex h-[64px] items-center rounded-[0.9rem] border bg-white px-5 shadow-sm',
+          newTargetMarketError ? 'border-rose-400' : 'border-slate-300',
+        ]"
+      >
+        <input
+          :value="newTargetMarket"
+          type="text"
+          class="w-full border-0 bg-transparent p-0 text-[18px] font-medium text-slate-900 outline-none placeholder:text-slate-400"
+          placeholder="e.g., Families or Business Travelers"
+          @input="handleTargetMarketInput"
+          @keydown.enter.prevent="saveTargetMarket"
+        />
+      </div>
+
+      <p
+        v-if="newTargetMarketError"
+        class="mt-3 text-[12px] font-medium text-rose-600"
+      >
+        {{ newTargetMarketError }}
+      </p>
+
+      <template #footer>
+        <div class="flex items-center gap-4">
+          <button
+            type="button"
+            class="inline-flex min-w-[160px] items-center justify-center rounded-full border border-slate-300 bg-white px-7 py-3 text-[16px] font-semibold text-slate-700 transition hover:bg-slate-50"
+            @click="closeTargetMarketModal"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="inline-flex min-w-[160px] items-center justify-center rounded-full bg-cyan-500 px-7 py-3 text-[16px] font-semibold text-white transition hover:bg-cyan-600"
+            @click="saveTargetMarket"
+          >
+            Save
+          </button>
+        </div>
+      </template>
+    </BaseModal>
+
+    <BaseModal
+      :open="isIndustryContextModalOpen"
+      title="Add New Attribute"
+      max-width-class="max-w-3xl"
+      @close="closeIndustryContextModal"
+    >
+      <p class="mt-4 max-w-2xl text-[15px] leading-7 text-slate-600">
+        Provide additional keywords to sharpen the AI understanding of your
+        brand industry landscape.
+      </p>
+
+      <div
+        :class="[
+          'mt-8 flex h-[64px] items-center rounded-[0.9rem] border bg-white px-5 shadow-sm',
+          newIndustryContextError ? 'border-rose-400' : 'border-slate-300',
+        ]"
+      >
+        <input
+          :value="newIndustryContext"
+          type="text"
+          class="w-full border-0 bg-transparent p-0 text-[18px] font-medium text-slate-900 outline-none placeholder:text-slate-400"
+          placeholder="e.g., Luxury Hospitality or Adventure Travel"
+          @input="handleIndustryContextInput"
+          @keydown.enter.prevent="saveIndustryContext"
+        />
+      </div>
+
+      <p
+        v-if="newIndustryContextError"
+        class="mt-3 text-[12px] font-medium text-rose-600"
+      >
+        {{ newIndustryContextError }}
+      </p>
+
+      <template #footer>
+        <div class="flex items-center gap-4">
+          <button
+            type="button"
+            class="inline-flex min-w-[160px] items-center justify-center rounded-full border border-slate-300 bg-white px-7 py-3 text-[16px] font-semibold text-slate-700 transition hover:bg-slate-50"
+            @click="closeIndustryContextModal"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="inline-flex min-w-[160px] items-center justify-center rounded-full bg-cyan-500 px-7 py-3 text-[16px] font-semibold text-white transition hover:bg-cyan-600"
+            @click="saveIndustryContext"
           >
             Save
           </button>

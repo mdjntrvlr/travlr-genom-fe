@@ -2,7 +2,8 @@
     <div class="h-[100vh]x">
         <div class="flex flex-col bg-[#F3F4F6] rounded-[8px] h-full overflow-hidden gap-5">
             <div class="bg-white flex justify-between items-between px-[24px] py-[16px] rounded-[8px]">
-                <div class="flex items-center gap-1">
+                <RouterLink to="/brand-repository"
+                    class="flex items-center gap-1 cursor-pointer hover:opacity-70 transition">
                     <span><svg width="20" height="13" viewBox="0 0 20 13" fill="none"
                             xmlns="http://www.w3.org/2000/svg">
                             <path
@@ -10,7 +11,8 @@
                                 fill="#4B5563" />
                         </svg></span>
                     <span>Back to Repository</span>
-                </div>
+                </RouterLink>
+
                 <div class="flex gap-3">
                     <span class="font-semibold">Mummu travel</span>
                     <span>travel.mummutravel.com</span>
@@ -53,17 +55,17 @@
                 <div class='flex-1 b-full flex flex-col border border-[#E5E7EB] bg-white rounded-[10px]'>
                     <div class="flex items-center justify-between h-[68px] px-5 border-b border-[#E5E7EB]">
                         <div class="text-lg font-semibold">Preview your Prototype page</div>
-                        <div class="relative inline-block text-left">
-                            <button
+                        <div ref="exportDropdownRef" class="relative inline-block text-left">
+                            <button @click="isExportDropdownOpen = !isExportDropdownOpen"
                                 class="inline-flex items-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50">
                                 Export
                             </button>
-                            <div
+                            <div v-if="isExportDropdownOpen"
                                 class="absolute right-0 z-10 mt-2 w-56 rounded-xl bg-white border border-slate-200 shadow-lg">
-                                <a href="/prototype/home"
+                                <RouterLink to="/prototype/home" target="_blank"
                                     class="block px-4 py-3 text-sm text-slate-700 hover:bg-slate-100">
                                     See full prototype
-                                </a>
+                                </RouterLink>
                             </div>
                         </div>
                     </div>
@@ -77,8 +79,26 @@
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted, onUnmounted } from 'vue';
 import ChatItem from "../components/ChatItem.vue";
 import PrototypeHomeView from "./PrototypeHomeView.vue";
+
+const isExportDropdownOpen = ref(false);
+const exportDropdownRef = ref(null);
+
+const handleClickOutside = (event: MouseEvent) => {
+    if (exportDropdownRef.value && !exportDropdownRef.value.contains(event.target as Node)) {
+        isExportDropdownOpen.value = false;
+    }
+};
+
+onMounted(() => {
+    document.addEventListener('click', handleClickOutside);
+});
+
+onUnmounted(() => {
+    document.removeEventListener('click', handleClickOutside);
+});
 
 const chatItems = [
     "Let’s create something together! Describe your desired subject or use case to get started!",

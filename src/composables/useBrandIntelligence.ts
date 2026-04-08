@@ -686,12 +686,17 @@ export const useBrandIntelligence = (
   };
 
   const saveBrandReview = () => {
+    currentStep.value = steps[2]?.number ?? 3;
     showToast("Brand review saved", "success");
   };
 
   const backToExtraction = () => {
     submitError.value = "";
     currentStep.value = steps[0]?.number ?? 1;
+  };
+
+  const backToBrandReview = () => {
+    currentStep.value = steps[1]?.number ?? 2;
   };
 
   const toTitleCase = (value: string) => {
@@ -1056,6 +1061,7 @@ export const useBrandIntelligence = (
     saveBrandNarrative,
     saveBrandReview,
     backToExtraction,
+    backToBrandReview,
     removeColor,
     removeCoreValue,
     removeBrandTone,

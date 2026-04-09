@@ -63,7 +63,7 @@
                     Enquire
                 </button>
                 <button
-                    class="flex-1 bg-[#EC008C] text-white py-2 px-4 rounded-full hover:bg-[#d1007a] transition-colors">
+                    class="flex-1 bg-primary hover:bg-primary/90 text-white py-2 px-4 rounded-full hover:bg-[#d1007a] transition-colors">
                     Book
                 </button>
             </div>

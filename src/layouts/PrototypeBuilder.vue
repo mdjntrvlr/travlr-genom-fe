@@ -47,8 +47,19 @@
                             Create a
                             Campaign landing page</div>
                         <div class='border border-[#E5E7EB] p-[12px] rounded-[12px] flex'>
-                            <input class='flex-1' placeholder='Enter Prompt' />
-                            <button class='bg-[#01B2C9] text-sm rounded-full px-4 py-2 text-white'>Generate</button>
+                            <input
+                                v-model="promptText"
+                                @keyup.enter="handleGenerate"
+                                class='flex-1'
+                                placeholder='Enter Prompt'
+                            />
+                            <button
+                                :disabled="isGenerating"
+                                @click="handleGenerate"
+                                class='bg-[#01B2C9] text-sm rounded-full px-4 py-2 text-white disabled:opacity-60 disabled:cursor-not-allowed'
+                            >
+                                {{ isGenerating ? 'Generating...' : 'Generate' }}
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -82,10 +93,13 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import ChatItem from '../components/ChatItem.vue';
+import { updateBrandPrototype } from '../services/brand.service';
 
 const route = useRoute();
 const isExportDropdownOpen = ref(false);
-const exportDropdownRef = ref(null);
+const exportDropdownRef = ref<HTMLElement | null>(null);
+const promptText = ref('');
+const isGenerating = ref(false);
 
 // Computed property for the prototype home URL
 const prototypeHomeUrl = computed(() => {
@@ -107,8 +121,24 @@ onUnmounted(() => {
     document.removeEventListener('click', handleClickOutside);
 });
 
-const chatItems = [
-    "Let’s create something together! Describe your desired subject or use case to get started!",
-    "Use AI to draft your campaign copy, visuals, or messaging in seconds."
-];
+const chatItems = ref<string[]>([]);
+
+const handleGenerate = async () => {
+    const text = promptText.value.trim();
+    if (!text || isGenerating.value) {
+        return;
+    }
+
+    try {
+        isGenerating.value = true;
+        const projectId = route.params.projectId as string;
+        await updateBrandPrototype(projectId, { brief: text });
+        chatItems.value.push(text);
+        promptText.value = '';
+    } catch (error) {
+        console.error('Failed to update prototype:', error);
+    } finally {
+        isGenerating.value = false;
+    }
+};
 </script>

@@ -7,6 +7,7 @@ import PrototypeHomeView from './views/PrototypeHomeView.vue'
 import PrototypeSearchView from './views/PrototypeSearchView.vue'
 import PrototypeDetailView from './views/PrototypeDetailView.vue'
 import PrototypeBuilder from './layouts/PrototypeBuilder.vue'
+import ProjectBrandScope from './layouts/ProjectBrandScope.vue'
 import { initializeClientTheme } from './utils/theme'
 
 let activeProjectTheme: string | null = null
@@ -36,6 +37,7 @@ const router = createRouter({
     },
     {
       path: '/p/:projectId',
+      component: ProjectBrandScope,
       children: [
         {
           path: 'prototype',

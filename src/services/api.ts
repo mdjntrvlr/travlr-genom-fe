@@ -40,4 +40,14 @@ export const apiRequest = async <T>(path: string, options: RequestOptions = {}):
 export const api = {
   get: <T>(path: string, options?: Omit<RequestOptions, 'method'>) =>
     apiRequest<T>(path, { ...options, method: 'GET' }),
+  post: <T>(
+    path: string,
+    body?: Record<string, unknown> | Array<unknown>,
+    options?: Omit<RequestOptions, 'method' | 'body'>,
+  ) =>
+    apiRequest<T>(path, {
+      ...options,
+      method: 'POST',
+      body: body === undefined ? undefined : JSON.stringify(body),
+    }),
 }

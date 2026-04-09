@@ -156,7 +156,7 @@
                                 <p class="text-sm text-gray-600 mb-1">from</p>
                                 <p class="text-lg font-bold text-gray-900 mb-1">AU$2,046</p>
                                 <p class="text-sm text-gray-600 line-through mb-1">AU$1,440</p>
-                                <p class="text-lg font-bold text-[#EC008C] mb-1">AU$1,400</p>
+                                <p class="text-lg font-bold text-secondary mb-1">AU$1,400</p>
                                 <p class="text-xs text-gray-600">Taxes and fees included</p>
                             </div>
                         </div>
@@ -193,7 +193,7 @@
                                 <p class="text-sm text-gray-600 mb-1">from</p>
                                 <p class="text-lg font-bold text-gray-900 mb-1">AU$2,850</p>
                                 <p class="text-sm text-gray-600 line-through mb-1">AU$2,100</p>
-                                <p class="text-lg font-bold text-[#EC008C] mb-1">AU$1,950</p>
+                                <p class="text-lg font-bold text-secondary mb-1">AU$1,950</p>
                                 <p class="text-xs text-gray-600">Taxes and fees included</p>
                             </div>
                         </div>

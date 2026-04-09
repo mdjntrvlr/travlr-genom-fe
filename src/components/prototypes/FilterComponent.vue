@@ -57,7 +57,7 @@
     </div>
 
     <!-- Apply Filters Button -->
-    <button class="w-full bg-[#EC008C] text-white py-2 px-4 rounded-lg font-medium hover:bg-[#d1007a] transition-colors">
+    <button class="w-full bg-primary hover:bg-primary/90 text-white py-2 px-4 rounded-lg font-medium hover:bg-[#d1007a] transition-colors">
       Apply Filters
     </button>
   </div>

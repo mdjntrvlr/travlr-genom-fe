@@ -17,7 +17,7 @@ const properties: Property[] = [
     image: "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=600&h=400&fit=crop",
     title: "Luxury Beach Resort",
     badge: "Featured",
-    badgeClass: "bg-[#EC008C] text-white",
+    badgeClass: "bg-primary hover:bg-primary/90 text-white",
     location: "Bali, Indonesia",
     stars: "★★★★★",
     rating: 4.8,

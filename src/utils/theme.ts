@@ -57,8 +57,7 @@ export const getThemeColors = () => {
 export const fetchClientTheme = async (clientSlug: string): Promise<ThemeColors> => {
     try {
         const brand = await getBrandBySlug(clientSlug)
-        console.log('__testing123:', brand.raw_data?.color_palette);
-
+        
         return {
             primary: brand.raw_data?.color_palette.primary || DEFAULT_THEME_COLORS.primary,
             secondary: brand.raw_data?.color_palette.secondary || DEFAULT_THEME_COLORS.secondary,

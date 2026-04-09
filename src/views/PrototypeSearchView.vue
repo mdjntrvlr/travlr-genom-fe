@@ -17,8 +17,13 @@
 </template>
 
 <script setup lang="ts">
+import type { Brand } from '../services';
 import FilterComponent from "../components/prototypes/FilterComponent.vue";
 import Footer from "../components/prototypes/Footer.vue";
 import Header from "../components/prototypes/Header.vue";
 import List from "../components/prototypes/pages/search/List.vue";
+
+defineProps<{
+  brand?: Brand
+}>();
 </script>

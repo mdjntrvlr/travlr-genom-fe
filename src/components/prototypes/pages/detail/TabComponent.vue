@@ -7,7 +7,7 @@
         :class="[
           'px-4 py-3 font-medium text-sm transition-colors border-b-2',
           index === 0
-            ? 'text-[#EC008C] border-[#EC008C]'
+            ? 'text-secondary border-accent'
             : 'text-gray-600 border-transparent hover:text-gray-900'
         ]"
       >

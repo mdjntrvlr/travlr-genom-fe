@@ -15,7 +15,7 @@
           class="w-full rounded-full border border-slate-200 bg-slate-50 py-3 pl-12 pr-4 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-100" />
       </div>
       <button @click="handleSearchClick" type="button"
-        class="prototype-click-target inline-flex items-center justify-center rounded-full bg-primary px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90">
+        class="prototype-click-target inline-flex items-center justify-center rounded-full bg-primary hover:bg-primary/90 px-6 py-3 text-sm font-semibold text-white shadow-sm transition">
         Search
       </button>
     </div>

@@ -6,8 +6,18 @@ interface ColorPalette {
     tertiary: string
 }
 
+interface Image {
+    id: string
+    url: string
+}
+
+export interface Banner {
+    image: Image
+}
+
 interface RawData {
     color_palette: ColorPalette
+    banner: Banner
 }
 
 export interface Brand {
@@ -25,4 +35,11 @@ export const getBrands = () => {
 
 export const getBrandBySlug = (slug: string) => {
     return api.get<Brand>(`/brands/${slug}`)
+}
+
+export const updateBrandPrototype = <TResponse = unknown>(
+    idOrSlug: string | number,
+    payload: Record<string, unknown> = {},
+) => {
+    return api.post<TResponse>(`/brands/${idOrSlug}/update-prototype`, payload)
 }

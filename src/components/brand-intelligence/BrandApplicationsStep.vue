@@ -4,6 +4,7 @@ import { useBrandApplications } from "../../composables/useBrandApplications";
 
 const props = defineProps<{
   backToBrandReview: () => void;
+  brandUrl: string;
   showToast: (message: string, tone: "success" | "error") => void;
 }>();
 
@@ -24,7 +25,7 @@ const {
   downloadAllGeneratedImages,
   handleBriefInput,
   saveBrief,
-} = useBrandApplications(props.showToast);
+} = useBrandApplications(props.showToast, () => props.brandUrl);
 </script>
 
 <template>

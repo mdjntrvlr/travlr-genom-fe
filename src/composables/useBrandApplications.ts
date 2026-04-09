@@ -170,6 +170,168 @@ const findValueByAliases = (payload: unknown, aliases: string[]) => {
   return undefined;
 };
 
+const findValuesByAliases = (payload: unknown, aliases: string[]) => {
+  const normalizedAliases = new Set(aliases.map(normalizeKey));
+  const queue: unknown[] = [payload];
+  const visited = new Set<object>();
+  const matches: unknown[] = [];
+
+  while (queue.length) {
+    const currentValue = queue.shift();
+
+    if (Array.isArray(currentValue)) {
+      queue.push(...currentValue);
+      continue;
+    }
+
+    if (!isRecord(currentValue)) {
+      continue;
+    }
+
+    if (visited.has(currentValue)) {
+      continue;
+    }
+
+    visited.add(currentValue);
+
+    for (const [key, value] of Object.entries(currentValue)) {
+      if (normalizedAliases.has(normalizeKey(key)) && value != null) {
+        matches.push(value);
+      }
+    }
+
+    queue.push(...Object.values(currentValue));
+  }
+
+  return matches;
+};
+
+const extractStringValues = (value: unknown): string[] => {
+  if (typeof value === "string") {
+    const normalizedValue = value.trim();
+    return normalizedValue ? [normalizedValue] : [];
+  }
+
+  if (typeof value === "number") {
+    return [String(value)];
+  }
+
+  if (Array.isArray(value)) {
+    return value.flatMap((item) => extractStringValues(item));
+  }
+
+  if (isRecord(value)) {
+    return Object.values(value).flatMap((item) => extractStringValues(item));
+  }
+
+  return [];
+};
+
+const getNormalizedDomainValue = (rawValue: string) => {
+  const trimmedValue = rawValue.trim();
+
+  if (!trimmedValue) {
+    return "";
+  }
+
+  try {
+    const parsedUrl = new URL(
+      /^https?:\/\//i.test(trimmedValue)
+        ? trimmedValue
+        : `https://${trimmedValue}`,
+    );
+
+    return parsedUrl.hostname.toLowerCase().replace(/^www\./, "");
+  } catch {
+    return trimmedValue
+      .toLowerCase()
+      .replace(/^https?:\/\//, "")
+      .replace(/^www\./, "")
+      .split("/")[0]
+      .split("?")[0]
+      .split("#")[0]
+      .replace(/:\d+$/, "")
+      .trim();
+  }
+};
+
+const getNormalizedBrandMatchValue = (rawValue: string) => {
+  const trimmedValue = rawValue.trim();
+
+  if (!trimmedValue) {
+    return "";
+  }
+
+  try {
+    const parsedUrl = new URL(
+      /^https?:\/\//i.test(trimmedValue)
+        ? trimmedValue
+        : `https://${trimmedValue}`,
+    );
+    const normalizedDomain = parsedUrl.hostname
+      .toLowerCase()
+      .replace(/^www\./, "");
+    const normalizedPath = parsedUrl.pathname
+      .replace(/\/+$/, "")
+      .toLowerCase();
+
+    return `${normalizedDomain}${normalizedPath}`;
+  } catch {
+    const normalizedValue = trimmedValue
+      .toLowerCase()
+      .replace(/^https?:\/\//, "")
+      .replace(/^www\./, "")
+      .replace(/[?#].*$/, "")
+      .replace(/\/+$/, "");
+
+    return normalizedValue;
+  }
+};
+
+const parseJsonSafely = (value: string): unknown => {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return value;
+  }
+};
+
+const extractBrandRows = (payload: unknown): UnknownRecord[] => {
+  const queue: unknown[] = [payload];
+  const visitedRecords = new Set<object>();
+  const rows: UnknownRecord[] = [];
+  const seenRows = new Set<object>();
+
+  while (queue.length) {
+    const currentValue = queue.shift();
+
+    if (Array.isArray(currentValue)) {
+      for (const item of currentValue) {
+        if (isRecord(item) && !seenRows.has(item)) {
+          seenRows.add(item);
+          rows.push(item);
+        }
+      }
+
+      queue.push(...currentValue);
+      continue;
+    }
+
+    if (!isRecord(currentValue)) {
+      continue;
+    }
+
+    if (visitedRecords.has(currentValue)) {
+      continue;
+    }
+
+    visitedRecords.add(currentValue);
+    queue.push(...Object.values(currentValue));
+  }
+
+  return rows;
+};
+
 const extractCopyOptions = (payload: unknown): GeneratedCopyOption[] => {
   const candidateValue = findValueByAliases(payload, [
     "options",
@@ -367,7 +529,9 @@ const triggerDownload = (url: string, fileName: string) => {
   document.body.removeChild(link);
 };
 
-const buildGeneratedBannerResult = (payload: unknown): GeneratedBannerResult => {
+const buildGeneratedBannerResult = (
+  payload: unknown,
+): GeneratedBannerResult => {
   const fallbackResult = buildFallbackGeneratedBannerResult();
   const copyOptions = extractCopyOptions(payload);
   const imageSupports = extractImageSupports(payload);
@@ -384,6 +548,7 @@ const buildGeneratedBannerResult = (payload: unknown): GeneratedBannerResult => 
 
 export const useBrandApplications = (
   showToast: (message: string, tone: "success" | "error") => void,
+  getBrandUrl: () => string,
 ) => {
   const applicationSections = ref<ApplicationSection[]>(
     buildDefaultApplicationSections(),
@@ -477,18 +642,120 @@ export const useBrandApplications = (
     return hasGeneratedSection(sectionIndex) ? "Reload" : "Generate";
   };
 
+  const resolveBrandIdByUrl = async () => {
+    const targetUrl = getBrandUrl().trim();
+    const normalizedTargetUrl = getNormalizedBrandMatchValue(targetUrl);
+    const normalizedTargetDomain = getNormalizedDomainValue(targetUrl);
+
+    if (!normalizedTargetUrl && !normalizedTargetDomain) {
+      return null;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/brands`);
+      const contentType = response.headers.get("content-type") ?? "";
+      const responsePayload = contentType.includes("application/json")
+        ? await response.json()
+        : parseJsonSafely(await response.text());
+
+      if (!response.ok) {
+        console.error("brands request failed", {
+          status: response.status,
+          result: responsePayload,
+        });
+        return null;
+      }
+
+      const brandRows = extractBrandRows(responsePayload);
+      let fallbackBrandId: string | null = null;
+
+      for (const brandRow of brandRows) {
+        const brandId = asNonEmptyString(
+          findValueByAliases(brandRow, ["id", "brandId", "brand_id"]),
+        );
+
+        if (!brandId) {
+          continue;
+        }
+
+        const brandUrlCandidates = [
+          ...findValuesByAliases(brandRow, [
+            "url",
+            "brandUrl",
+            "brand_url",
+            "website",
+            "websiteUrl",
+            "website_url",
+            "siteUrl",
+            "site_url",
+            "homepage",
+          ]),
+          ...findValuesByAliases(brandRow, [
+            "domain",
+            "domainName",
+            "domain_name",
+            "host",
+            "hostname",
+          ]),
+        ].flatMap((item) => extractStringValues(item));
+
+        for (const candidate of brandUrlCandidates) {
+          const normalizedCandidateUrl = getNormalizedBrandMatchValue(candidate);
+          const normalizedCandidateDomain = getNormalizedDomainValue(candidate);
+
+          if (
+            normalizedTargetUrl &&
+            normalizedCandidateUrl &&
+            (normalizedTargetUrl === normalizedCandidateUrl ||
+              normalizedTargetUrl.startsWith(`${normalizedCandidateUrl}/`) ||
+              normalizedCandidateUrl.startsWith(`${normalizedTargetUrl}/`))
+          ) {
+            return brandId;
+          }
+
+          if (
+            !fallbackBrandId &&
+            normalizedTargetDomain &&
+            normalizedCandidateDomain &&
+            normalizedTargetDomain === normalizedCandidateDomain
+          ) {
+            fallbackBrandId = brandId;
+          }
+        }
+      }
+
+      return fallbackBrandId;
+    } catch (error) {
+      console.error("brands request error", error);
+      return null;
+    }
+  };
+
   const generateBanner = async (sectionIndex: number) => {
-    const brandId = 1;
+    const targetUrl = getBrandUrl().trim();
+
+    if (!targetUrl) {
+      showToast("Brand URL is missing. Complete Brand Extraction first.", "error");
+      return;
+    }
+
     const brief = getSectionBrief(sectionIndex);
-    const query = new URLSearchParams({
-      brand_id: String(brandId),
-      brief,
-    });
-    const url = `${API_BASE_URL}/create-banner?${query.toString()}`;
 
     generatingBySection.value[sectionIndex] = true;
 
     try {
+      const brandId = await resolveBrandIdByUrl();
+
+      if (!brandId) {
+        showToast(`No brand match found for ${targetUrl}`, "error");
+        return;
+      }
+
+      const query = new URLSearchParams({
+        brand_id: brandId,
+        brief,
+      });
+      const url = `${API_BASE_URL}/create-banner?${query.toString()}`;
       const response = await fetch(url);
       const contentType = response.headers.get("content-type") ?? "";
       const result = contentType.includes("application/json")
@@ -500,6 +767,7 @@ export const useBrandApplications = (
           status: response.status,
           result,
         });
+        showToast("Unable to generate banner", "error");
         return;
       }
 
@@ -570,7 +838,8 @@ export const useBrandApplications = (
 
           const blob = await response.blob();
           const objectUrl = URL.createObjectURL(blob);
-          const extension = getFileExtensionFromType(blob.type) || fallbackExtension;
+          const extension =
+            getFileExtensionFromType(blob.type) || fallbackExtension;
           const fileName = `homepage-support-${index + 1}.${extension}`;
 
           triggerDownload(objectUrl, fileName);

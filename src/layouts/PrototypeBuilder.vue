@@ -2,7 +2,7 @@
     <div class="h-[100vh]x">
         <div class="flex flex-col bg-[#F3F4F6] rounded-[8px] h-full overflow-hidden gap-5">
             <div class="bg-white flex justify-between items-between px-[24px] py-[16px] rounded-[8px]">
-                <RouterLink to="/brand-repository"
+                <RouterLink to="/prototype-builder-repository"
                     class="flex items-center gap-1 cursor-pointer hover:opacity-70 transition">
                     <span><svg width="20" height="13" viewBox="0 0 20 13" fill="none"
                             xmlns="http://www.w3.org/2000/svg">

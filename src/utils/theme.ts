@@ -3,10 +3,18 @@
  * Allows setting primary, secondary, etc. colors from API responses
  */
 
+import { getBrandBySlug } from '../services/brand.service'
+
 export interface ThemeColors {
     primary?: string;
     secondary?: string;
     accent?: string;
+}
+
+const DEFAULT_THEME_COLORS: ThemeColors = {
+    primary: '#EC008C',
+    secondary: '#6366f1',
+    accent: '#f59e0b',
 }
 
 /**
@@ -48,32 +56,24 @@ export const getThemeColors = () => {
  */
 export const fetchClientTheme = async (clientSlug: string): Promise<ThemeColors> => {
     try {
-        // Replace with your actual API endpoint
-        const response = await fetch(`/api/clients/${clientSlug}/theme`);
-        const data = await response.json();
+        const brand = await getBrandBySlug(clientSlug)
+        console.log('__testing123:', brand.raw_data?.color_palette);
 
         return {
-            primary: data.primaryColor,
-            secondary: data.secondaryColor,
-            accent: data.accentColor,
+            primary: brand.raw_data?.color_palette.primary || DEFAULT_THEME_COLORS.primary,
+            secondary: brand.raw_data?.color_palette.secondary || DEFAULT_THEME_COLORS.secondary,
+            accent: brand.raw_data?.color_palette.tertiary || DEFAULT_THEME_COLORS.accent,
         };
     } catch (error) {
         console.error('Failed to fetch client theme:', error);
-        // Return default colors
-        return {
-            primary: '#EC008C', // Default pink
-            secondary: '#6366f1', // Default indigo
-            accent: '#f59e0b', // Default amber
-        };
+        return DEFAULT_THEME_COLORS;
     }
 };
 
 /**
- * Initialize theme for a client
- * Call this on app startup with the client slug
+ * Initialize theme for a client slug
  */
 export const initializeClientTheme = async (clientSlug: string) => {
-    const colors = await fetchClientTheme(clientSlug);
-
-    setThemeColors(colors);
-};
+    const colors = await fetchClientTheme(clientSlug)
+    setThemeColors(colors)
+}

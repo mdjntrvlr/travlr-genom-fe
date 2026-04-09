@@ -7,6 +7,9 @@ import PrototypeHomeView from './views/PrototypeHomeView.vue'
 import PrototypeSearchView from './views/PrototypeSearchView.vue'
 import PrototypeDetailView from './views/PrototypeDetailView.vue'
 import PrototypeBuilder from './layouts/PrototypeBuilder.vue'
+import { initializeClientTheme } from './utils/theme'
+
+let activeProjectTheme: string | null = null
 
 const router = createRouter({
   history: createWebHistory(),
@@ -85,6 +88,17 @@ const router = createRouter({
       ],
     },
   ],
+})
+
+router.beforeEach(async (to) => {
+  const projectId = to.params.projectId
+
+  if (typeof projectId === 'string' && to.path.startsWith('/p/') && projectId !== activeProjectTheme) {
+    await initializeClientTheme(projectId)
+    activeProjectTheme = projectId
+  }
+
+  return true
 })
 
 export default router

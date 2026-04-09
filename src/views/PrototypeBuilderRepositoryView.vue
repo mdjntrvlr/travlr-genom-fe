@@ -19,20 +19,18 @@
 
             <!-- Repository items -->
             <div v-else class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                <div v-for="item in repositoryItems" :key="item.id" 
-                    class="cursor-pointer overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm transition hover:shadow-md"
-                    @click="navigateToPrototypeBuilder(item.clientId)"
-                >
+                <div v-for="item in repositoryItems" :key="item.id"
+                    class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm transition hover:shadow-md">
                     <div class="aspect-video">
-                        <img :src="item.image" :alt="item.title" class="h-full w-full object-cover" />
+                        <img :src="item.logo" :alt="item.name" class="h-full w-full object-cover" />
                     </div>
                     <div class="p-6">
-                        <h3 class="text-lg font-medium text-gray-900">{{ item.title }}</h3>
+                        <h3 class="text-lg font-medium text-gray-900">{{ item.name }}</h3>
                         <p class="mt-2 text-sm text-gray-600">{{ item.url }}</p>
                         <div class="mt-4 flex items-center justify-between">
                             <span class="text-xs text-gray-400">ID: {{ item.id }}</span>
-                            <button
-                                class="rounded-full bg-primary px-3 py-1 text-xs font-medium text-white hover:bg-primary/90">
+                            <button @click="navigateToPrototypeBuilder(item.slug)"
+                                class="cursor-pointer rounded-full bg-primary px-3 py-1 text-xs font-medium text-white hover:bg-primary/90">
                                 View
                             </button>
                         </div>
@@ -56,15 +54,10 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { getBrands } from '../services/brand.service'
+import type { Brand } from '../services/brand.service'
 
-interface RepositoryItem {
-  id: string
-  slug: string
-  title: string
-  image: string
-  url: string
-  clientId: string
-}
+type RepositoryItem = Brand
 
 const repositoryItems = ref<RepositoryItem[]>([])
 const loading = ref(true)
@@ -72,76 +65,17 @@ const router = useRouter()
 
 // Click handler to navigate to client's prototype builder
 const navigateToPrototypeBuilder = (clientId: string) => {
-  router.push(`/p/${clientId}/prototype-builder/home`)
+    router.push(`/p/${clientId}/prototype-builder/home`)
 }
 
-// Dummy data - replace with API call
-const dummyData: RepositoryItem[] = [
-  {
-    id: '1',
-    slug: 'hotel-booking-template',
-    title: 'Hotel Booking Template',
-    image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&h=200&fit=crop',
-    url: '/templates/hotel-booking',
-    clientId: 'client1'
-  },
-  {
-    id: '2',
-    slug: 'flight-search-component',
-    title: 'Flight Search Component',
-    image: 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=400&h=200&fit=crop',
-    url: '/templates/flight-search',
-    clientId: 'client2'
-  },
-  {
-    id: '3',
-    slug: 'activity-explorer',
-    title: 'Activity Explorer',
-    image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=200&fit=crop',
-    url: '/templates/activity-explorer',
-    clientId: 'client1'
-  },
-  {
-    id: '4',
-    slug: 'car-rental-form',
-    title: 'Car Rental Form',
-    image: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=400&h=200&fit=crop',
-    url: '/templates/car-rental',
-    clientId: 'client3'
-  },
-  {
-    id: '5',
-    slug: 'travel-offers-display',
-    title: 'Travel Offers Display',
-    image: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400&h=200&fit=crop',
-    url: '/templates/travel-offers',
-    clientId: 'client2'
-  },
-  {
-    id: '6',
-    slug: 'user-profile-widget',
-    title: 'User Profile Widget',
-    image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=200&fit=crop',
-    url: '/templates/user-profile',
-    clientId: 'client1'
-  }
-]
-
-// Simulate API call
 const fetchRepositoryItems = async () => {
     loading.value = true
     try {
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 1000))
+        const brands = await getBrands()
 
-        // TODO: Replace with actual API call
-        // const response = await fetch('/api/repository/items')
-        // const data = await response.json()
-        // repositoryItems.value = data
-
-        repositoryItems.value = dummyData
+        repositoryItems.value = brands
     } catch (error) {
-        console.error('Failed to fetch repository items:', error)
+        console.error('Failed to load brands:', error)
         repositoryItems.value = []
     } finally {
         loading.value = false

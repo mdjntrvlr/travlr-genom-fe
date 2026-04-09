@@ -24,6 +24,14 @@ const iconMap = {
   "menu-2": iconMenu2,
   "menu-3": iconMenu3,
 };
+
+const isNavItemActive = (item: NavItem, isActive: boolean) => {
+  if (item.to === "/brand-repository") {
+    return route.path === item.to || route.path.startsWith(`${item.to}/`);
+  }
+
+  return isActive;
+};
 </script>
 
 <template>
@@ -49,13 +57,20 @@ const iconMap = {
         <nav class="space-y-2">
           <RouterLink v-for="item in navItems" :key="item.label" :to="item.to" custom
             v-slot="{ href, navigate, isActive }">
-            <a :href="href" @click="navigate" :class="[
-              'flex items-center gap-2.5 rounded-xl px-3 py-2 text-[15px] transition hover:bg-slate-50',
-              isActive
-                ? 'bg-slate-100 font-bold text-slate-900'
-                : 'font-medium text-slate-600',
-            ]">
-              <span class="h-5 w-5 shrink-0" :class="isActive ? 'bg-[#01B2C9]' : 'bg-slate-500'" :style="{
+            <a
+              :href="href"
+              @click="navigate"
+              :class="[
+                'flex items-center gap-2.5 rounded-xl px-3 py-2 text-[15px] transition hover:bg-slate-50',
+                isNavItemActive(item, isActive)
+                  ? 'bg-slate-100 font-bold text-slate-900'
+                  : 'font-medium text-slate-600',
+              ]"
+            >
+              <span
+                class="h-5 w-5 shrink-0"
+                :class="isNavItemActive(item, isActive) ? 'bg-[#01B2C9]' : 'bg-slate-500'"
+                :style="{
                 WebkitMaskImage: `url(${iconMap[item.icon]})`,
                 maskImage: `url(${iconMap[item.icon]})`,
                 WebkitMaskRepeat: 'no-repeat',
@@ -64,9 +79,10 @@ const iconMap = {
                 maskPosition: 'center',
                 WebkitMaskSize: 'contain',
                 maskSize: 'contain',
-              }"></span>
+              }"
+              ></span>
 
-              <span :class="isActive ? 'font-bold' : 'font-medium'">{{
+              <span :class="isNavItemActive(item, isActive) ? 'font-bold' : 'font-medium'">{{
                 item.label
               }}</span>
             </a>

@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 import BrandIntelligenceView from './views/BrandIntelligenceView.vue'
 import BrandRepositoryView from './views/BrandRepositoryView.vue'
+import BrandRepositoryDetailView from './views/BrandRepositoryDetailView.vue'
 import PrototypeBuilderRepositoryView from './views/PrototypeBuilderRepositoryView.vue'
 import PrototypeHomeView from './views/PrototypeHomeView.vue'
 import PrototypeSearchView from './views/PrototypeSearchView.vue'
@@ -28,6 +29,11 @@ const router = createRouter({
       path: '/brand-repository',
       name: 'brand-repository',
       component: BrandRepositoryView,
+    },
+    {
+      path: '/brand-repository/:slug',
+      name: 'brand-repository-detail',
+      component: BrandRepositoryDetailView,
     },
     {
       path: '/prototype-builder-repository',

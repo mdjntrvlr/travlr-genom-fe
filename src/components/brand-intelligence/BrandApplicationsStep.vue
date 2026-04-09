@@ -4,12 +4,18 @@ import { ref } from "vue";
 import BaseModal from "../BaseModal.vue";
 import { useBrandApplications } from "../../composables/useBrandApplications";
 
-const props = defineProps<{
-  backToBrandReview: () => void;
-  brandUrl: string;
-  logoCandidates: string[];
-  showToast: (message: string, tone: "success" | "error") => void;
-}>();
+const props = withDefaults(
+  defineProps<{
+    backToBrandReview: () => void;
+    backButtonLabel?: string;
+    brandUrl: string;
+    logoCandidates: string[];
+    showToast: (message: string, tone: "success" | "error") => void;
+  }>(),
+  {
+    backButtonLabel: "Back to Brand review",
+  },
+);
 
 const {
   applicationSections,
@@ -385,7 +391,7 @@ const toggleBrandAssets = () => {
       class="mt-8 text-[16px] font-medium text-slate-700 transition hover:text-slate-900"
       @click="backToBrandReview"
     >
-      Back to Brand review
+      {{ backButtonLabel }}
     </button>
 
     <BaseModal

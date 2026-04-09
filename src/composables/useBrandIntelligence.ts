@@ -27,15 +27,15 @@ const buildDefaultReviewState = (): ReviewState => ({
     "The Bali Bible is a trusted travel companion for modern explorers seeking curated island experiences. It blends insider knowledge with polished editorial storytelling to make discovery feel effortless, aspirational, and deeply connected to local culture.",
 });
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL?.trim() || "/api";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.trim() || "/api";
 
 type UnknownRecord = Record<string, unknown>;
 
 const isRecord = (value: unknown): value is UnknownRecord =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
-const normalizeKey = (value: string) => value.replace(/[^a-z0-9]/gi, "").toLowerCase();
+const normalizeKey = (value: string) =>
+  value.replace(/[^a-z0-9]/gi, "").toLowerCase();
 
 const normalizeText = (value: string) => value.trim().replace(/\s+/g, " ");
 
@@ -147,7 +147,14 @@ const extractString = (value: unknown): string => {
   }
 
   if (isRecord(value)) {
-    for (const key of ["name", "label", "title", "value", "text", "description"]) {
+    for (const key of [
+      "name",
+      "label",
+      "title",
+      "value",
+      "text",
+      "description",
+    ]) {
       const nestedValue = value[key];
 
       if (typeof nestedValue === "string" || typeof nestedValue === "number") {
@@ -651,7 +658,9 @@ export const useBrandIntelligence = (
   };
 
   const saveIndustryContext = () => {
-    const normalizedValue = newIndustryContext.value.trim().replace(/\s+/g, " ");
+    const normalizedValue = newIndustryContext.value
+      .trim()
+      .replace(/\s+/g, " ");
 
     if (!normalizedValue) {
       newIndustryContextError.value = "Enter a value before saving.";
@@ -708,7 +717,9 @@ export const useBrandIntelligence = (
   };
 
   const getDomainFromValue = (value: string) => {
-    const normalizedValue = /^https?:\/\//i.test(value) ? value : `https://${value}`;
+    const normalizedValue = /^https?:\/\//i.test(value)
+      ? value
+      : `https://${value}`;
 
     try {
       return new URL(normalizedValue).hostname.replace(/^www\./i, "");
@@ -901,7 +912,9 @@ export const useBrandIntelligence = (
       domain: resolvedDomain,
       logoCandidates,
       colors: colors.length ? colors : defaultReviewState.colors,
-      coreValues: coreValues.length ? coreValues : defaultReviewState.coreValues,
+      coreValues: coreValues.length
+        ? coreValues
+        : defaultReviewState.coreValues,
       brandTones: brandTones.length
         ? brandTones
         : defaultReviewState.brandTones,
@@ -937,9 +950,8 @@ export const useBrandIntelligence = (
   };
 
   const removeBrandAesthetic = (value: string) => {
-    reviewState.value.brandAesthetics = reviewState.value.brandAesthetics.filter(
-      (item) => item !== value,
-    );
+    reviewState.value.brandAesthetics =
+      reviewState.value.brandAesthetics.filter((item) => item !== value);
   };
 
   const removeTargetMarket = (value: string) => {
@@ -949,9 +961,8 @@ export const useBrandIntelligence = (
   };
 
   const removeIndustryContext = (value: string) => {
-    reviewState.value.industryContexts = reviewState.value.industryContexts.filter(
-      (item) => item !== value,
-    );
+    reviewState.value.industryContexts =
+      reviewState.value.industryContexts.filter((item) => item !== value);
   };
 
   const copyColor = async (color: string) => {
@@ -985,7 +996,6 @@ export const useBrandIntelligence = (
       }
 
       const data = await response.json();
-      console.log("Extract Brand response:", data);
       buildReviewState(validationResult.value, data);
       currentStep.value = 2;
     } catch (error) {

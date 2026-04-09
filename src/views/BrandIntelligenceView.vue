@@ -214,6 +214,8 @@ const setFileInput = (element: HTMLInputElement | null) => {
     <BrandApplicationsStep
       v-else
       :back-to-brand-review="backToBrandReview"
+      :brand-url="websiteUrl"
+      :show-toast="showToast"
     />
 
     <footer

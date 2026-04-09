@@ -1,137 +1,30 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
-
 import BaseModal from "../BaseModal.vue";
+import { useBrandApplications } from "../../composables/useBrandApplications";
 
-type ApplicationItem = {
-  label: string;
-  actionLabel: string;
-  statusLabel: string;
-  brief: string;
-  isBriefEnabled: boolean;
-};
-
-type ApplicationSection = {
-  title: string;
-  description: string;
-  moduleTitle: string;
-  items: ApplicationItem[];
-};
-
-defineProps<{
+const props = defineProps<{
   backToBrandReview: () => void;
+  showToast: (message: string, tone: "success" | "error") => void;
 }>();
 
-const applicationSections = ref<ApplicationSection[]>([
-  {
-    title: "WLP Supports & Product Sections",
-    description:
-      "Generate high-converting headlines, sub-headings, and body copy for homepage carousels and product landing pages, automatically paired with Shutterstock visual assets.",
-    moduleTitle: "Homepage Section",
-    items: [
-      {
-        label: "Homepage Hero Banner",
-        actionLabel: "Set Brief",
-        statusLabel: "",
-        brief: "",
-        isBriefEnabled: true,
-      },
-      {
-        label: "Supporting Banner",
-        actionLabel: "Edit",
-        statusLabel: "Brief Applied",
-        brief:
-          "Use playful, conversion-focused copy with a confident editorial tone and destination-led value props.",
-        isBriefEnabled: true,
-      },
-    ],
-  },
-  {
-    title: "",
-    description: "",
-    moduleTitle: "Brand Assets",
-    items: [
-      {
-        label: "Logo Specs",
-        actionLabel: "",
-        statusLabel: "",
-        brief: "",
-        isBriefEnabled: false,
-      },
-    ],
-  },
-]);
-
-type ActiveItemPosition = {
-  sectionIndex: number;
-  itemIndex: number;
-};
-
-const isBriefModalOpen = ref(false);
-const briefDraft = ref("");
-const activeItemPosition = ref<ActiveItemPosition | null>(null);
-
-const getActiveItem = () => {
-  const position = activeItemPosition.value;
-
-  if (!position) {
-    return null;
-  }
-
-  return (
-    applicationSections.value[position.sectionIndex]?.items[
-      position.itemIndex
-    ] ?? null
-  );
-};
-
-const briefModalTitle = computed(() => {
-  const item = getActiveItem();
-
-  if (item?.actionLabel === "Edit") {
-    return "Edit Brief";
-  }
-
-  return "Set Brief";
-});
-
-const openBriefModal = (sectionIndex: number, itemIndex: number) => {
-  const item = applicationSections.value[sectionIndex]?.items[itemIndex];
-
-  if (!item || !item.isBriefEnabled) {
-    return;
-  }
-
-  activeItemPosition.value = { sectionIndex, itemIndex };
-  briefDraft.value = item.brief;
-  isBriefModalOpen.value = true;
-};
-
-const closeBriefModal = () => {
-  isBriefModalOpen.value = false;
-  activeItemPosition.value = null;
-  briefDraft.value = "";
-};
-
-const handleBriefInput = (event: Event) => {
-  const target = event.target as HTMLInputElement;
-  briefDraft.value = target.value;
-};
-
-const saveBrief = () => {
-  const normalizedBrief = briefDraft.value.trim();
-  const item = getActiveItem();
-
-  if (!item) {
-    closeBriefModal();
-    return;
-  }
-
-  item.brief = normalizedBrief;
-  item.statusLabel = normalizedBrief ? "Brief Applied" : "";
-  item.actionLabel = normalizedBrief ? "Edit" : "Set Brief";
-  closeBriefModal();
-};
+const {
+  applicationSections,
+  isBriefModalOpen,
+  briefDraft,
+  briefModalTitle,
+  openBriefModal,
+  closeBriefModal,
+  generateBanner,
+  isGeneratingSection,
+  getGenerateButtonLabel,
+  shouldShowGeneratedHomepageHero,
+  getSectionGeneration,
+  copyGeneratedText,
+  removeGeneratedImage,
+  downloadAllGeneratedImages,
+  handleBriefInput,
+  saveBrief,
+} = useBrandApplications(props.showToast);
 </script>
 
 <template>
@@ -164,10 +57,25 @@ const saveBrief = () => {
 
             <button
               type="button"
-              class="inline-flex items-center gap-2 self-start rounded-full border border-slate-300 bg-white px-4 py-2 text-[14px] font-medium text-slate-800 transition hover:bg-slate-50 sm:self-auto cursor-not-allowed cursor-pointer"
+              :disabled="isGeneratingSection(sectionIndex)"
+              :class="[
+                'inline-flex items-center gap-2 self-start rounded-full border border-slate-300 bg-white px-4 py-2 text-[14px] font-medium text-slate-800 transition hover:bg-slate-50 sm:self-auto',
+                isGeneratingSection(sectionIndex)
+                  ? 'cursor-not-allowed opacity-70'
+                  : 'cursor-pointer',
+              ]"
+              @click="generateBanner(sectionIndex)"
             >
-              <i class="ri-ai-generate-2 text-sm" aria-hidden="true"></i>
-              Generate
+              <i
+                :class="[
+                  'text-sm',
+                  isGeneratingSection(sectionIndex)
+                    ? 'ri-loader-4-line animate-spin'
+                    : 'ri-ai-generate-2',
+                ]"
+                aria-hidden="true"
+              ></i>
+              {{ getGenerateButtonLabel(sectionIndex) }}
             </button>
           </div>
 
@@ -175,49 +83,152 @@ const saveBrief = () => {
             <div
               v-for="(item, itemIndex) in section.items"
               :key="item.label"
-              class="flex flex-col gap-3 rounded-[0.85rem] border border-slate-200 bg-slate-50 px-5 py-5 sm:flex-row sm:items-center sm:justify-between"
+              class="flex flex-col gap-3 rounded-[0.85rem] border border-slate-200 bg-slate-50 px-5 py-5"
             >
-              <p class="text-[16px] font-medium text-slate-800">
-                {{ item.label }}
-              </p>
-
-              <div
-                v-if="item.actionLabel || item.statusLabel"
-                class="flex flex-wrap items-center gap-4"
-              >
-                <span
-                  v-if="item.statusLabel"
-                  class="inline-flex items-center gap-2 rounded-full bg-cyan-50 px-4 py-2 text-[14px] font-medium text-slate-700"
-                >
-                  <span
-                    class="flex h-5 w-5 items-center justify-center rounded-full border border-cyan-500 text-cyan-500"
-                  >
-                    <svg
-                      class="h-3 w-3"
-                      viewBox="0 0 20 20"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      aria-hidden="true"
-                    >
-                      <path
-                        d="m4.5 10 3.5 3.5 7-7"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                    </svg>
-                  </span>
-                  {{ item.statusLabel }}
-                </span>
+              <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <p class="text-[16px] font-medium text-slate-800">
+                  {{ item.label }}
+                </p>
 
                 <button
-                  v-if="item.actionLabel"
+                  v-if="shouldShowGeneratedHomepageHero(sectionIndex, item.label)"
                   type="button"
-                  class="text-[15px] font-medium text-slate-700 transition hover:text-slate-900 cursor-pointer"
+                  class="inline-flex cursor-pointer items-center gap-1 text-[15px] font-medium text-slate-700 transition hover:text-slate-900"
                   @click="openBriefModal(sectionIndex, itemIndex)"
                 >
-                  {{ item.actionLabel }}
+                  {{ item.actionLabel || "Set Brief" }}
+                  <i class="ri-arrow-down-s-line text-[18px]" aria-hidden="true"></i>
                 </button>
+
+                <div
+                  v-else-if="item.actionLabel || item.statusLabel"
+                  class="flex flex-wrap items-center gap-4"
+                >
+                  <span
+                    v-if="item.statusLabel"
+                    class="inline-flex items-center gap-2 rounded-full bg-cyan-50 px-4 py-2 text-[14px] font-medium text-slate-700"
+                  >
+                    <span
+                      class="flex h-5 w-5 items-center justify-center rounded-full border border-cyan-500 text-cyan-500"
+                    >
+                      <svg
+                        class="h-3 w-3"
+                        viewBox="0 0 20 20"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        aria-hidden="true"
+                      >
+                        <path
+                          d="m4.5 10 3.5 3.5 7-7"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        />
+                      </svg>
+                    </span>
+                    {{ item.statusLabel }}
+                  </span>
+
+                  <button
+                    v-if="item.actionLabel"
+                    type="button"
+                    class="text-[15px] font-medium text-slate-700 transition hover:text-slate-900 cursor-pointer"
+                    @click="openBriefModal(sectionIndex, itemIndex)"
+                  >
+                    {{ item.actionLabel }}
+                  </button>
+                </div>
+              </div>
+
+              <div
+                v-if="shouldShowGeneratedHomepageHero(sectionIndex, item.label)"
+                class="mt-5 rounded-[0.95rem] border border-slate-200 bg-white px-4 py-5 sm:px-7 sm:py-6"
+              >
+                <div
+                  v-for="(option, optionIndex) in getSectionGeneration(sectionIndex)?.copyOptions || []"
+                  :key="option.id"
+                  class="mt-8 first:mt-0"
+                >
+                  <p class="text-[16px] font-semibold text-slate-900">
+                    Option {{ optionIndex + 1 }}
+                  </p>
+
+                  <p class="mt-3 text-[18px] font-medium text-slate-800">
+                    Hero heading
+                  </p>
+                  <div
+                    class="mt-2 flex items-start justify-between gap-3 rounded-xl bg-slate-100 px-4 py-3"
+                  >
+                    <p class="text-[16px] leading-7 text-slate-700">
+                      {{ option.heroHeading }}
+                    </p>
+                    <button
+                      type="button"
+                      class="inline-flex cursor-pointer items-center justify-center rounded-md p-1 text-slate-500 transition hover:bg-slate-200 hover:text-slate-700"
+                      @click="copyGeneratedText(option.heroHeading)"
+                    >
+                      <i class="ri-file-copy-line text-[18px]" aria-hidden="true"></i>
+                    </button>
+                  </div>
+
+                  <p class="mt-4 text-[18px] font-medium text-slate-800">
+                    Sub heading
+                  </p>
+                  <div
+                    class="mt-2 flex items-start justify-between gap-3 rounded-xl bg-slate-100 px-4 py-3"
+                  >
+                    <p class="text-[16px] leading-7 text-slate-700">
+                      {{ option.subHeading }}
+                    </p>
+                    <button
+                      type="button"
+                      class="inline-flex cursor-pointer items-center justify-center rounded-md p-1 text-slate-500 transition hover:bg-slate-200 hover:text-slate-700"
+                      @click="copyGeneratedText(option.subHeading)"
+                    >
+                      <i class="ri-file-copy-line text-[18px]" aria-hidden="true"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="mt-8 flex items-center justify-between gap-3">
+                  <div class="inline-flex items-center gap-2 text-[15px] text-slate-700">
+                    <span class="font-medium">Image Supports</span>
+                    <span>({{ getSectionGeneration(sectionIndex)?.imageSizeLabel || "1440x560" }})</span>
+                    <i class="ri-information-line text-[14px]" aria-hidden="true"></i>
+                  </div>
+                  <button
+                    type="button"
+                    class="cursor-pointer text-[16px] font-medium text-slate-700 transition hover:text-slate-900"
+                    @click="downloadAllGeneratedImages(sectionIndex)"
+                  >
+                    Download all image
+                  </button>
+                </div>
+
+                <div class="mt-4 grid gap-4 sm:grid-cols-2">
+                  <div
+                    v-for="image in getSectionGeneration(sectionIndex)?.imageSupports || []"
+                    :key="image.id"
+                    class="relative overflow-hidden rounded-xl border border-slate-200 bg-slate-50"
+                  >
+                    <button
+                      type="button"
+                      class="absolute right-2 top-2 inline-flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-white/95 text-slate-500 shadow-sm transition hover:text-slate-700"
+                      @click="removeGeneratedImage(sectionIndex, image.id)"
+                    >
+                      <i class="ri-close-line text-[16px]" aria-hidden="true"></i>
+                    </button>
+                    <img
+                      :src="image.url"
+                      alt="Generated support"
+                      class="h-[190px] w-full object-cover"
+                    />
+                  </div>
+                </div>
+
+                <p class="mt-5 text-[14px] italic text-slate-500">
+                  powered by shutterstock
+                </p>
               </div>
             </div>
           </div>

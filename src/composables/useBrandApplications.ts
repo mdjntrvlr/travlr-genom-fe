@@ -3,6 +3,7 @@ import { computed, ref } from "vue";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.trim() || "/api";
 const HOMEPAGE_SECTION_MODULE_TITLE = "Homepage Section";
 const HOMEPAGE_HERO_ITEM_LABEL = "Homepage Hero Banner";
+const BRAND_ASSETS_MODULE_TITLE = "Brand Assets";
 
 type ApplicationItem = {
   label: string;
@@ -41,6 +42,15 @@ type GeneratedBannerResult = {
   imageSizeLabel: string;
 };
 
+type BrandAssetSpecs = {
+  mainLogoUrl: string;
+  invertLogoUrl: string;
+  faviconUrl: string;
+  emailLogoUrl: string;
+  logoUrls: string[];
+  allAssetUrls: string[];
+};
+
 type UnknownRecord = Record<string, unknown>;
 
 const buildDefaultApplicationSections = (): ApplicationSection[] => [
@@ -57,28 +67,13 @@ const buildDefaultApplicationSections = (): ApplicationSection[] => [
         brief: "",
         isBriefEnabled: true,
       },
-      {
-        label: "Supporting Banner",
-        actionLabel: "",
-        statusLabel: "",
-        brief: "",
-        isBriefEnabled: true,
-      },
     ],
   },
   {
-    title: "",
+    title: "Brand Assets",
     description: "",
     moduleTitle: "Brand Assets",
-    items: [
-      {
-        label: "Logo Specs",
-        actionLabel: "",
-        statusLabel: "",
-        brief: "",
-        isBriefEnabled: false,
-      },
-    ],
+    items: [],
   },
 ];
 
@@ -133,6 +128,27 @@ const asNonEmptyString = (value: unknown): string => {
   }
 
   return "";
+};
+
+const uniqueNonEmptyStrings = (values: string[]) => {
+  const seen = new Set<string>();
+
+  return values.filter((value) => {
+    const normalizedValue = value.trim();
+
+    if (!normalizedValue) {
+      return false;
+    }
+
+    const normalizedKey = normalizedValue.toLowerCase();
+
+    if (seen.has(normalizedKey)) {
+      return false;
+    }
+
+    seen.add(normalizedKey);
+    return true;
+  });
 };
 
 const findValueByAliases = (payload: unknown, aliases: string[]) => {
@@ -529,6 +545,37 @@ const triggerDownload = (url: string, fileName: string) => {
   document.body.removeChild(link);
 };
 
+const sanitizeFileToken = (value: string) =>
+  value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "") || "asset";
+
+const downloadAsset = async (url: string, fileName: string) => {
+  try {
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`Asset request failed (${response.status})`);
+    }
+
+    const blob = await response.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    const extension = getFileExtensionFromType(blob.type) || getFileExtensionFromUrl(url);
+    const normalizedFileName = fileName.includes(".")
+      ? fileName
+      : `${fileName}.${extension}`;
+
+    triggerDownload(objectUrl, normalizedFileName);
+    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
+    return true;
+  } catch (error) {
+    console.error("Unable to download asset via blob", error);
+    triggerDownload(url, fileName);
+    return false;
+  }
+};
+
 const buildGeneratedBannerResult = (
   payload: unknown,
 ): GeneratedBannerResult => {
@@ -549,6 +596,7 @@ const buildGeneratedBannerResult = (
 export const useBrandApplications = (
   showToast: (message: string, tone: "success" | "error") => void,
   getBrandUrl: () => string,
+  getBrandLogoCandidates: () => string[],
 ) => {
   const applicationSections = ref<ApplicationSection[]>(
     buildDefaultApplicationSections(),
@@ -617,6 +665,13 @@ export const useBrandApplications = (
     applicationSections.value[sectionIndex]?.moduleTitle ===
     HOMEPAGE_SECTION_MODULE_TITLE;
 
+  const isBrandAssetsSection = (sectionIndex: number) =>
+    applicationSections.value[sectionIndex]?.moduleTitle ===
+    BRAND_ASSETS_MODULE_TITLE;
+
+  const shouldShowGenerateButton = (sectionIndex: number) =>
+    isHomepageSection(sectionIndex);
+
   const shouldShowGeneratedHomepageHero = (
     sectionIndex: number,
     itemLabel: string,
@@ -640,6 +695,126 @@ export const useBrandApplications = (
     }
 
     return hasGeneratedSection(sectionIndex) ? "Reload" : "Generate";
+  };
+
+  const brandAssetSpecs = computed<BrandAssetSpecs>(() => {
+    const logoCandidates = uniqueNonEmptyStrings(
+      getBrandLogoCandidates().map((value) => asNonEmptyString(value).trim()),
+    );
+
+    const faviconUrl =
+      logoCandidates.find((value) =>
+        /(favicon|fav-icon|fav_icon|siteicon|site-icon|icon)/i.test(value),
+      ) ?? "";
+    const invertLogoUrl =
+      logoCandidates.find((value) =>
+        /(invert|inverse|negative|white|light|mono)/i.test(value),
+      ) ?? "";
+
+    const mainLogoUrl =
+      logoCandidates.find(
+        (value) => value !== faviconUrl && value !== invertLogoUrl,
+      ) ??
+      logoCandidates[0] ??
+      "";
+    const resolvedInvertLogoUrl =
+      invertLogoUrl ||
+      logoCandidates.find(
+        (value) => value !== mainLogoUrl && value !== faviconUrl,
+      ) ||
+      mainLogoUrl;
+    const resolvedFaviconUrl =
+      faviconUrl ||
+      logoCandidates.find(
+        (value) => value !== mainLogoUrl && value !== resolvedInvertLogoUrl,
+      ) ||
+      logoCandidates[0] ||
+      "";
+    const emailLogoUrl = mainLogoUrl || resolvedInvertLogoUrl || "";
+
+    return {
+      mainLogoUrl,
+      invertLogoUrl: resolvedInvertLogoUrl,
+      faviconUrl: resolvedFaviconUrl,
+      emailLogoUrl,
+      logoUrls: uniqueNonEmptyStrings([mainLogoUrl, resolvedInvertLogoUrl]),
+      allAssetUrls: uniqueNonEmptyStrings([
+        mainLogoUrl,
+        resolvedInvertLogoUrl,
+        resolvedFaviconUrl,
+        emailLogoUrl,
+      ]),
+    };
+  });
+
+  const downloadBrandAssetItems = async (
+    items: Array<{ label: string; url: string }>,
+    emptyMessage: string,
+    successMessage: string,
+  ) => {
+    const validItems = items.filter((item) => item.url.trim());
+
+    if (!validItems.length) {
+      showToast(emptyMessage, "error");
+      return;
+    }
+
+    const downloadResults = await Promise.all(
+      validItems.map(async (item, index) => {
+        const fileExtension = getFileExtensionFromUrl(item.url);
+        const fileName = `${sanitizeFileToken(item.label)}-${index + 1}.${fileExtension}`;
+        return downloadAsset(item.url, fileName);
+      }),
+    );
+
+    const successCount = downloadResults.filter(Boolean).length;
+
+    if (successCount === validItems.length) {
+      showToast(successMessage, "success");
+      return;
+    }
+
+    showToast(`${successMessage} (some may open in a new tab)`, "success");
+  };
+
+  const downloadAllBrandAssets = async () => {
+    await downloadBrandAssetItems(
+      [
+        { label: "main-logo", url: brandAssetSpecs.value.mainLogoUrl },
+        { label: "invert-logo", url: brandAssetSpecs.value.invertLogoUrl },
+        { label: "favicon", url: brandAssetSpecs.value.faviconUrl },
+        { label: "email-logo", url: brandAssetSpecs.value.emailLogoUrl },
+      ],
+      "No brand assets available to download",
+      "Downloading all brand assets",
+    );
+  };
+
+  const downloadLogoAssets = async () => {
+    await downloadBrandAssetItems(
+      [
+        { label: "main-logo", url: brandAssetSpecs.value.mainLogoUrl },
+        { label: "invert-logo", url: brandAssetSpecs.value.invertLogoUrl },
+      ],
+      "No logo assets available to download",
+      "Downloading logo assets",
+    );
+  };
+
+  const downloadFaviconAsset = async () => {
+    await downloadBrandAssetItems(
+      [{ label: "favicon", url: brandAssetSpecs.value.faviconUrl }],
+      "No favicon available to download",
+      "Downloading favicon",
+    );
+  };
+
+  const downloadEmailLogoAsset = async () => {
+    await downloadBrandAssetItems(
+      [{ label: "email-logo", url: brandAssetSpecs.value.emailLogoUrl }],
+      "No email logo available to download",
+      "Downloading email logo",
+    );
   };
 
   const resolveBrandIdByUrl = async () => {
@@ -898,6 +1073,8 @@ export const useBrandApplications = (
     openBriefModal,
     closeBriefModal,
     generateBanner,
+    shouldShowGenerateButton,
+    isBrandAssetsSection,
     isGeneratingSection,
     hasGeneratedSection,
     getGenerateButtonLabel,
@@ -906,6 +1083,11 @@ export const useBrandApplications = (
     copyGeneratedText,
     removeGeneratedImage,
     downloadAllGeneratedImages,
+    brandAssetSpecs,
+    downloadAllBrandAssets,
+    downloadLogoAssets,
+    downloadFaviconAsset,
+    downloadEmailLogoAsset,
     handleBriefInput,
     saveBrief,
   };

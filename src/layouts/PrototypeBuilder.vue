@@ -2,7 +2,7 @@
     <div class="h-[100vh]x">
         <div class="flex flex-col bg-[#F3F4F6] rounded-[8px] h-full overflow-hidden gap-5">
             <div class="bg-white flex justify-between items-between px-[24px] py-[16px] rounded-[8px]">
-                <RouterLink to="/brand-repository"
+                <RouterLink to="/prototype-builder-repository"
                     class="flex items-center gap-1 cursor-pointer hover:opacity-70 transition">
                     <span><svg width="20" height="13" viewBox="0 0 20 13" fill="none"
                             xmlns="http://www.w3.org/2000/svg">
@@ -62,7 +62,7 @@
                             </button>
                             <div v-if="isExportDropdownOpen"
                                 class="absolute right-0 z-10 mt-2 w-56 rounded-xl bg-white border border-slate-200 shadow-lg">
-                                <RouterLink to="/prototype/home" target="_blank"
+                                <RouterLink :to="prototypeHomeUrl" target="_blank"
                                     class="block px-4 py-3 text-sm text-slate-700 hover:bg-slate-100">
                                     See full prototype
                                 </RouterLink>
@@ -79,11 +79,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { useRoute } from 'vue-router';
 import ChatItem from '../components/ChatItem.vue';
 
+const route = useRoute();
 const isExportDropdownOpen = ref(false);
 const exportDropdownRef = ref(null);
+
+// Computed property for the prototype home URL
+const prototypeHomeUrl = computed(() => {
+  const projectId = route.params.projectId as string;
+  return `/p/${projectId}/prototype/home`;
+});
 
 const handleClickOutside = (event: MouseEvent) => {
     if (exportDropdownRef.value && !exportDropdownRef.value.contains(event.target as Node)) {

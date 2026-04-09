@@ -4,6 +4,13 @@
   --primary-color: #EC008C;
   --secondary-color: #6366f1;
   --accent-color: #f59e0b;
+  --click-hint-color: #EC008C;
+}
+
+@theme inline {
+  --color-primary: var(--primary-color);
+  --color-secondary: var(--secondary-color);
+  --color-accent: var(--accent-color);
 }
 
 @layer base {
@@ -11,6 +18,24 @@
   body,
   #app {
     min-height: 100%;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+  }
+
+  * {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+  }
+
+  input,
+  textarea,
+  select,
+  [contenteditable='true'] {
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    user-select: text;
   }
 
   body {
@@ -21,3 +46,32 @@
     @apply text-inherit no-underline;
   }
 }
+
+/* Add .prototype-click-target to elements that should be emphasized as clickable. */
+.prototype-click-target {
+  cursor: pointer;
+  position: relative;
+  transition: box-shadow 180ms ease, transform 180ms ease;
+}
+
+.prototype-click-target--highlight {
+  animation: prototype-click-pulse 900ms ease;
+}
+
+@keyframes prototype-click-pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--click-hint-color), white 22%);
+    transform: translateY(0);
+  }
+
+  35% {
+    box-shadow: 0 0 0 10px color-mix(in oklab, var(--click-hint-color), transparent 70%);
+    transform: translateY(-1px);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--click-hint-color), transparent 100%);
+    transform: translateY(0);
+  }
+}
+

@@ -3,10 +3,18 @@
  * Allows setting primary, secondary, etc. colors from API responses
  */
 
+import { getBrandBySlug } from '../services/brand.service'
+
 export interface ThemeColors {
-  primary?: string;
-  secondary?: string;
-  accent?: string;
+    primary?: string;
+    secondary?: string;
+    accent?: string;
+}
+
+const DEFAULT_THEME_COLORS: ThemeColors = {
+    primary: '#EC008C',
+    secondary: '#6366f1',
+    accent: '#f59e0b',
 }
 
 /**
@@ -14,32 +22,32 @@ export interface ThemeColors {
  * @param colors - Object with color values (hex codes)
  */
 export const setThemeColors = (colors: ThemeColors) => {
-  const root = document.documentElement.style;
+    const root = document.documentElement.style;
 
-  if (colors.primary) {
-    root.setProperty('--primary-color', colors.primary);
-  }
+    if (colors.primary) {
+        root.setProperty('--primary-color', colors.primary);
+    }
 
-  if (colors.secondary) {
-    root.setProperty('--secondary-color', colors.secondary);
-  }
+    if (colors.secondary) {
+        root.setProperty('--secondary-color', colors.secondary);
+    }
 
-  if (colors.accent) {
-    root.setProperty('--accent-color', colors.accent);
-  }
+    if (colors.accent) {
+        root.setProperty('--accent-color', colors.accent);
+    }
 };
 
 /**
  * Get current theme colors
  */
 export const getThemeColors = () => {
-  const root = getComputedStyle(document.documentElement);
+    const root = getComputedStyle(document.documentElement);
 
-  return {
-    primary: root.getPropertyValue('--primary-color').trim(),
-    secondary: root.getPropertyValue('--secondary-color').trim(),
-    accent: root.getPropertyValue('--accent-color').trim(),
-  };
+    return {
+        primary: root.getPropertyValue('--primary-color').trim(),
+        secondary: root.getPropertyValue('--secondary-color').trim(),
+        accent: root.getPropertyValue('--accent-color').trim(),
+    };
 };
 
 /**
@@ -47,32 +55,25 @@ export const getThemeColors = () => {
  * @param clientSlug - The client identifier (e.g., from URL or config)
  */
 export const fetchClientTheme = async (clientSlug: string): Promise<ThemeColors> => {
-  try {
-    // Replace with your actual API endpoint
-    const response = await fetch(`/api/clients/${clientSlug}/theme`);
-    const data = await response.json();
+    try {
+        const brand = await getBrandBySlug(clientSlug)
+        console.log('__testing123:', brand.raw_data?.color_palette);
 
-    return {
-      primary: data.primaryColor,
-      secondary: data.secondaryColor,
-      accent: data.accentColor,
-    };
-  } catch (error) {
-    console.error('Failed to fetch client theme:', error);
-    // Return default colors
-    return {
-      primary: '#EC008C', // Default pink
-      secondary: '#6366f1', // Default indigo
-      accent: '#f59e0b', // Default amber
-    };
-  }
+        return {
+            primary: brand.raw_data?.color_palette.primary || DEFAULT_THEME_COLORS.primary,
+            secondary: brand.raw_data?.color_palette.secondary || DEFAULT_THEME_COLORS.secondary,
+            accent: brand.raw_data?.color_palette.tertiary || DEFAULT_THEME_COLORS.accent,
+        };
+    } catch (error) {
+        console.error('Failed to fetch client theme:', error);
+        return DEFAULT_THEME_COLORS;
+    }
 };
 
 /**
- * Initialize theme for a client
- * Call this on app startup with the client slug
+ * Initialize theme for a client slug
  */
 export const initializeClientTheme = async (clientSlug: string) => {
-  const colors = await fetchClientTheme(clientSlug);
-  setThemeColors(colors);
-};
+    const colors = await fetchClientTheme(clientSlug)
+    setThemeColors(colors)
+}

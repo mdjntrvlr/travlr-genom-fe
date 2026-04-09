@@ -14,11 +14,19 @@
         <input type="text" placeholder="Search by Destination or Activity"
           class="w-full rounded-full border border-slate-200 bg-slate-50 py-3 pl-12 pr-4 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-100" />
       </div>
-      <button type="button"
-        class="inline-flex items-center justify-center rounded-full bg-primary px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90">
+      <button @click="handleSearchClick" type="button"
+        class="prototype-click-target inline-flex items-center justify-center rounded-full bg-primary px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90">
         Search
       </button>
     </div>
   </div>
 
 </template>
+
+<script setup lang="ts">
+import { navigateToPrototypeSearch } from '../../../../../utils/navigation';
+
+const handleSearchClick = () => {
+  navigateToPrototypeSearch();
+}
+</script>

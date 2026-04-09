@@ -39,10 +39,18 @@
         </select>
       </div>
 
-      <button type="button"
-        class="inline-flex w-full items-center justify-center rounded-3xl bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90">
+      <button type="button" @click="handleSearchClick"
+        class="prototype-click-target inline-flex w-full items-center justify-center rounded-3xl bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90">
         Search
       </button>
     </div>
   </div>
 </template>
+
+<script setup lang="ts">
+import { navigateToPrototypeSearch } from '../../../../../utils/navigation';
+
+const handleSearchClick = () => {
+  navigateToPrototypeSearch();
+}
+</script>

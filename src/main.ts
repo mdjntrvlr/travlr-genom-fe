@@ -3,5 +3,8 @@ import App from './App.vue'
 import router from './router'
 import 'remixicon/fonts/remixicon.css'
 import './styles.css'
+import { initClickableHints } from './utils/clickableHints'
 
 createApp(App).use(router).mount('#app')
+
+initClickableHints()

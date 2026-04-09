@@ -4,8 +4,8 @@
       <div class="flex items-center justify-between">
         <!-- Logo -->
         <div class="flex items-center">
-          <div @click="handleLogoClicked" class="cursor-pointer">
-            <Logo class="mr-8" />
+          <div @click="handleLogoClicked" class="prototype-click-target cursor-pointer mr-8">
+            <Logo />
           </div>
 
           <!-- Left Menu -->

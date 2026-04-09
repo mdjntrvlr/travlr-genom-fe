@@ -1,5 +1,5 @@
 <template>
-    <div @click="handleClick" class="bg-white cursor-pointer rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
+    <div @click="handleClick" class="prototype-click-target bg-white cursor-pointer rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
         <img :src="card.image" :alt="card.title" class="w-full h-48 object-cover">
         <div class="p-4">
             <h3 class="font-semibold text-lg mb-2">{{ card.title }}</h3>

@@ -13,6 +13,7 @@ let activeProjectTheme: string | null = null
 
 const router = createRouter({
   history: createWebHistory(),
+  scrollBehavior: () => ({ top: 0 }),
   routes: [
     {
       path: '/',

@@ -1,5 +1,5 @@
 <template>
-  <div class="flex gap-4">
+  <div class="no-text-selection flex gap-4">
     <div>
       <input type="text" placeholder="Enter city or hotel"
         class="mt-2 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-100" />
@@ -20,9 +20,17 @@
       </select>
     </div>
 
-    <button type="button"
-      class="inline-flex w-full items-center justify-center rounded-3xl bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90">
+    <button type="button" @click="handleSearchClick"
+      class="prototype-click-target inline-flex w-full items-center justify-center rounded-3xl bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90">
       Search
     </button>
   </div>
 </template>
+
+<script setup lang="ts">
+import { navigateToPrototypeSearch } from '../../../../../utils/navigation';
+
+const handleSearchClick = () => {
+  navigateToPrototypeSearch();
+}
+</script>

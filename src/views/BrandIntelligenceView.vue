@@ -215,6 +215,7 @@ const setFileInput = (element: HTMLInputElement | null) => {
       v-else
       :back-to-brand-review="backToBrandReview"
       :brand-url="websiteUrl"
+      :logo-candidates="reviewState.logoCandidates"
       :show-toast="showToast"
     />
 

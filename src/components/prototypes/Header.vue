@@ -5,7 +5,15 @@
         <!-- Logo -->
         <div class="flex items-center">
           <div @click="handleLogoClicked" class="prototype-click-target cursor-pointer mr-8">
-            <Logo />
+            <img
+              v-if="activeBrandLogo"
+              :src="activeBrandLogo"
+              :alt="activeBrandName"
+              class="h-10 w-auto object-contain"
+            />
+            <span v-else class="inline-block rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-500">
+              Logo Here
+            </span>
           </div>
 
           <!-- Left Menu -->
@@ -63,8 +71,19 @@
 </template>
 
 <script setup lang="ts">
+import { computed, inject } from 'vue'
 import { navigateToPrototypeHome } from '../../utils/navigation';
-import Logo from './pages/home/Logo.vue'
+import { projectBrandContextKey } from '../../utils/projectBrandContext';
+
+const projectBrandContext = inject(projectBrandContextKey, null)
+
+const activeBrandLogo = computed(() => {
+  return projectBrandContext?.brand.value?.logo || ''
+})
+
+const activeBrandName = computed(() => {
+  return projectBrandContext?.brand.value?.name || 'Brand logo'
+})
 
 const handleLogoClicked = () => {
   navigateToPrototypeHome()

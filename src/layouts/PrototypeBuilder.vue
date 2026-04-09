@@ -14,8 +14,8 @@
                 </RouterLink>
 
                 <div class="flex gap-3">
-                    <span class="font-semibold">Mummu travel</span>
-                    <span>travel.mummutravel.com</span>
+                    <span class="font-semibold">{{ activeBrand?.name || 'Brand name' }}</span>
+                    <span>{{ activeBrand?.url || 'brand.url' }}</span>
                 </div>
             </div>
             <div class='flex gap-5 flex-1'>
@@ -90,16 +90,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { ref, onMounted, onUnmounted, computed, inject } from 'vue';
 import { useRoute } from 'vue-router';
 import ChatItem from '../components/ChatItem.vue';
-import { updateBrandPrototype } from '../services/brand.service';
+import { type Brand, updateBrandPrototype } from '../services/brand.service';
+import { projectBrandContextKey } from '../utils/projectBrandContext';
+import { setThemeColors } from '../utils/theme';
 
 const route = useRoute();
+const projectBrandContext = inject(projectBrandContextKey, null);
 const isExportDropdownOpen = ref(false);
 const exportDropdownRef = ref<HTMLElement | null>(null);
 const promptText = ref('');
 const isGenerating = ref(false);
+
+const activeBrand = computed(() => projectBrandContext?.brand.value ?? null);
 
 // Computed property for the prototype home URL
 const prototypeHomeUrl = computed(() => {
@@ -123,6 +128,30 @@ onUnmounted(() => {
 
 const chatItems = ref<string[]>([]);
 
+const isRecord = (value: unknown): value is Record<string, unknown> => {
+    return typeof value === 'object' && value !== null;
+};
+
+const extractBrandFromUpdateResponse = (response: unknown): Partial<Brand> | null => {
+    if (!isRecord(response)) {
+        return null;
+    }
+
+    if (isRecord(response.brand)) {
+        return response.brand as Partial<Brand>;
+    }
+
+    if (isRecord(response.data) && isRecord(response.data.brand)) {
+        return response.data.brand as Partial<Brand>;
+    }
+
+    if ('id' in response || 'slug' in response || 'name' in response || 'raw_data' in response) {
+        return response as Partial<Brand>;
+    }
+
+    return null;
+};
+
 const handleGenerate = async () => {
     const text = promptText.value.trim();
     if (!text || isGenerating.value) {
@@ -132,7 +161,29 @@ const handleGenerate = async () => {
     try {
         isGenerating.value = true;
         const projectId = route.params.projectId as string;
-        await updateBrandPrototype(projectId, { brief: text });
+        const response = await updateBrandPrototype<unknown>(projectId, { brief: text });
+
+        if (projectBrandContext) {
+            const nextBrandPatch = extractBrandFromUpdateResponse(response);
+
+            if (nextBrandPatch) {
+                projectBrandContext.patchBrand(nextBrandPatch);
+            } else {
+                await projectBrandContext.refreshBrand();
+            }
+
+            const themeSource = nextBrandPatch ?? projectBrandContext.brand.value;
+            const colorPalette = themeSource?.raw_data?.color_palette;
+
+            if (colorPalette) {
+                setThemeColors({
+                    primary: colorPalette.primary,
+                    secondary: colorPalette.secondary,
+                    accent: colorPalette.tertiary,
+                });
+            }
+        }
+
         chatItems.value.push(text);
         promptText.value = '';
     } catch (error) {

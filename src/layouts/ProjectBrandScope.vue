@@ -12,6 +12,30 @@ const route = useRoute()
 const brand = ref<Brand | null>(null)
 const isLoadingBrand = ref(false)
 
+const setBrand = (nextBrand: Brand | null) => {
+  brand.value = nextBrand
+}
+
+const patchBrand = (partialBrand: Partial<Brand>) => {
+  if (!brand.value) {
+    brand.value = partialBrand as Brand
+    return
+  }
+
+  const nextRawData = partialBrand.raw_data
+    ? {
+        ...brand.value.raw_data,
+        ...partialBrand.raw_data,
+      }
+    : brand.value.raw_data
+
+  brand.value = {
+    ...brand.value,
+    ...partialBrand,
+    raw_data: nextRawData,
+  }
+}
+
 const projectId = computed(() => {
   const value = route.params.projectId
   return typeof value === 'string' ? value : ''
@@ -42,5 +66,7 @@ provide(projectBrandContextKey, {
   brand: readonly(brand),
   isLoadingBrand: readonly(isLoadingBrand),
   refreshBrand,
+  setBrand,
+  patchBrand,
 })
 </script>

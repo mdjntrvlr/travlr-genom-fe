@@ -62,7 +62,7 @@
                             </button>
                             <div v-if="isExportDropdownOpen"
                                 class="absolute right-0 z-10 mt-2 w-56 rounded-xl bg-white border border-slate-200 shadow-lg">
-                                <RouterLink to="/prototype/home" target="_blank"
+                                <RouterLink :to="prototypeHomeUrl" target="_blank"
                                     class="block px-4 py-3 text-sm text-slate-700 hover:bg-slate-100">
                                     See full prototype
                                 </RouterLink>
@@ -79,11 +79,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { useRoute } from 'vue-router';
 import ChatItem from '../components/ChatItem.vue';
 
+const route = useRoute();
 const isExportDropdownOpen = ref(false);
 const exportDropdownRef = ref(null);
+
+// Computed property for the prototype home URL
+const prototypeHomeUrl = computed(() => {
+  const projectId = route.params.projectId as string;
+  return `/p/${projectId}/prototype/home`;
+});
 
 const handleClickOutside = (event: MouseEvent) => {
     if (exportDropdownRef.value && !exportDropdownRef.value.contains(event.target as Node)) {

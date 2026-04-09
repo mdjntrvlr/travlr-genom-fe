@@ -6,6 +6,12 @@
   --accent-color: #f59e0b;
 }
 
+@theme inline {
+  --color-primary: var(--primary-color);
+  --color-secondary: var(--secondary-color);
+  --color-accent: var(--accent-color);
+}
+
 @layer base {
   html,
   body,

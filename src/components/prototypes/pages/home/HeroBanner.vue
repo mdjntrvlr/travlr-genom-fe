@@ -10,7 +10,7 @@
         curated just for you.
       </p>
       <button
-        class="bg-white text-black px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors duration-200">
+        class="bg-primary text-accent px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors duration-200">
         Book Now!
       </button>
     </div>

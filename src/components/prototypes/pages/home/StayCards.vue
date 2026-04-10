@@ -1,13 +1,19 @@
 <template>
   <div class="py-16 px-8 max-w-7xl mx-auto">
-    <div class="text-left mb-12">
-      <h2 class="text-[24px] font-bold text-gray-900 mb-4">
-        Find Your Happy Place, Anywhere.
-      </h2>
-      <p class="text-[16px] text-[#374151]">
-        Explore handpicked stays around the world with exclusive WanderJoy Travel rates and instant points.
-      </p>
+    <div class="flex justify-between">
+      <div class="text-left mb-12">
+        <h2 class="text-[24px] font-bold text-[#111827] mb-4">
+          Find Your Happy Place, Anywhere.
+        </h2>
+        <p class="text-[16px] text-[#374151] max-w-2xl">
+          Explore handpicked stays around the world with exclusive WanderJoy Travel rates and instant points.
+        </p>
+      </div>
+      <button
+        class="mt-2 cursor-pointer rounded-full px-[16px] text-[#111827] border text-[14px] font-bold line-height-[32px] h-[32px]">See
+        More</button>
     </div>
+
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       <StayCard v-for="(card, index) in stayCards" :key="index" :card="card" @card-click="handleCardClick(card)" />
     </div>

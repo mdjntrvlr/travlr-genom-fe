@@ -172,6 +172,9 @@ const handleGenerate = async () => {
   try {
     isGenerating.value = true;
     const projectId = route.params.projectId as string;
+
+    chatItems.value.push(text);
+    
     const response = await updateBrandPrototype<unknown>(projectId, { brief: text });
 
     if (projectBrandContext) {
@@ -195,7 +198,6 @@ const handleGenerate = async () => {
       }
     }
 
-    chatItems.value.push(text);
     promptText.value = '';
     await nextTick();
     if (textareaRef.value) textareaRef.value.style.height = 'auto';

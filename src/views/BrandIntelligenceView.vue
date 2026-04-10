@@ -3,6 +3,7 @@ import BaseModal from "../components/BaseModal.vue";
 import BrandApplicationsStep from "../components/brand-intelligence/BrandApplicationsStep.vue";
 import BrandExtractionStep from "../components/brand-intelligence/BrandExtractionStep.vue";
 import BrandReviewStep from "../components/brand-intelligence/BrandReviewStep.vue";
+import TravlrCompatibility from "../components/travlr-compatibility/TravlrCompatibility.vue";
 import { useBrandIntelligence } from "../composables/useBrandIntelligence";
 import { useToast } from "../composables/useToast";
 import { useUploadQueue } from "../composables/useUploadQueue";
@@ -211,13 +212,16 @@ const setFileInput = (element: HTMLInputElement | null) => {
       :back-to-extraction="backToExtraction"
     />
 
-    <BrandApplicationsStep
-      v-else
-      :back-to-brand-review="backToBrandReview"
-      :brand-url="websiteUrl"
-      :logo-candidates="reviewState.logoCandidates"
-      :show-toast="showToast"
-    />
+    <template v-else>
+      <TravlrCompatibility :website-url="reviewState.slug" />
+      
+      <BrandApplicationsStep
+        :back-to-brand-review="backToBrandReview"
+        :brand-url="websiteUrl"
+        :logo-candidates="reviewState.logoCandidates"
+        :show-toast="showToast"
+      />
+    </template>
 
     <footer
       v-if="currentStep !== 1"

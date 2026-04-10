@@ -1,4 +1,5 @@
 import { api } from './api'
+import type { TravlrCompatibilityData } from './travlrCompatibility.service'
 
 interface ColorPalette {
     primary: string
@@ -18,6 +19,7 @@ export interface Banner {
 interface RawData {
     color_palette: ColorPalette
     banner: Banner
+    travlr_compatibility?: TravlrCompatibilityData
 }
 
 export interface Brand {

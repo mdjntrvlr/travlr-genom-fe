@@ -3,6 +3,7 @@ import { computed, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
 import BrandApplicationsStep from "../components/brand-intelligence/BrandApplicationsStep.vue";
+import TravlrCompatibility from "../components/travlr-compatibility/TravlrCompatibility.vue";
 import { useToast } from "../composables/useToast";
 import { getBrandBySlug, type Brand } from "../services/brand.service";
 
@@ -104,6 +105,8 @@ const uniqueNonEmptyStrings = (values: string[]) => {
     return true;
   });
 };
+
+const travlrCompatibility = computed(() => brand.value?.raw_data?.travlr_compatibility ?? null)
 
 const logoCandidates = computed(() => {
   const selectedBrand = brand.value;
@@ -214,6 +217,8 @@ watch(brandSlug, () => {
         assets and URL context.
       </p>
     </section>
+
+    <TravlrCompatibility :preloaded-data="travlrCompatibility" />
 
     <BrandApplicationsStep
       :back-to-brand-review="backToRepository"

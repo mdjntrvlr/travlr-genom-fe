@@ -9,6 +9,7 @@ import type {
 const buildDefaultReviewState = (): ReviewState => ({
   brandName: "The Bali Bible",
   domain: "thebalibible.com",
+  slug: "",
   logoCandidates: [],
   colors: ["#2DCCD3", "#FFFFFF", "#111827", "#1F2937"],
   coreValues: [
@@ -906,10 +907,16 @@ export const useBrandIntelligence = (
       ) ||
       defaultReviewState.brandNarrative;
 
+    const resolvedSlug =
+      extractString(
+        findDirectValueByAliases(payload, ["slug", "id", "brandSlug", "brand_slug"]),
+      ) || resolvedDomain;
+
     reviewState.value = {
       ...defaultReviewState,
       brandName: resolvedBrandName,
       domain: resolvedDomain,
+      slug: resolvedSlug,
       logoCandidates,
       colors: colors.length ? colors : defaultReviewState.colors,
       coreValues: coreValues.length
@@ -997,6 +1004,7 @@ export const useBrandIntelligence = (
 
       const data = await response.json();
       buildReviewState(validationResult.value, data);
+
       currentStep.value = 2;
     } catch (error) {
       submitError.value =
